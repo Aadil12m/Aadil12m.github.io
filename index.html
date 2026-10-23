@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Muhammad Aadil, robotics engineer. Warehouse AMR, reconfigurable piezo-jet robot, Isaac Sim synthetic data and a soft elephant-trunk end effector.">
 <style>
-:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; font: 14px/1.4 system-ui, -apple-system, sans-serif; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
@@ -172,6 +172,11 @@ a:hover { text-decoration: underline; }
 .card h3 { font-size: 21px; font-weight: 600; letter-spacing: 0.011em; }
 .card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; color: var(--ink-80); }
 
+.next-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.next-cards .card { background: var(--parchment); border-color: transparent; }
+@media (max-width: 900px) { .next-cards { grid-template-columns: minmax(0, 1fr); } }
+.next-cards .card p { font-size: 15px; color: var(--ink-80); }
+
 /* contact */
 .contact-list { margin: var(--s-xxl) auto 0; max-width: 620px; border-top: 1px solid var(--hairline-dark); }
 .crow { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--hairline-dark); align-items: baseline; }
@@ -235,7 +240,7 @@ footer .inner { display: flex; justify-content: space-between; gap: 12px; flex-w
   <div class="inner">
     <a class="brand" href="#top">Muhammad Aadil</a>
     <nav aria-label="Sections">
-      <a href="#amr">AMR</a><a href="#piezo" class="opt">Piezo robot</a><a href="#vial" class="opt">Isaac Sim</a><a href="#research">Research</a><a href="#contact">Contact</a>
+      <a href="#amr">AMR</a><a href="#piezo" class="opt">Piezo robot</a><a href="#vial" class="opt">Isaac Sim</a><a href="#research">Research</a><a href="#next" class="opt">Up next</a><a href="#contact">Contact</a>
     </nav>
   </div>
 </header>
@@ -250,7 +255,7 @@ footer .inner { display: flex; justify-content: space-between; gap: 12px; flex-w
       </div>
       <canvas id="armCanvas" class="sim-white" aria-label="The name Muhammad Aadil assembles from a scanned point cloud"></canvas>
       <div class="tile-head">
-        <p class="tagline">I build robots from the chassis up to the autonomy stack.</p>
+        <p class="tagline">From CAD to code, I build robots that work on their own.</p>
         <p style="color:var(--ink-48)">Third-year mechanical engineering student at IIT Bhubaneswar.</p>
         <div class="ctas">
           <a class="pill" href="#amr">See the work</a>
@@ -383,6 +388,22 @@ footer .inner { display: flex; justify-content: space-between; gap: 12px; flex-w
         <div class="card"><h3>Embedded</h3><ul><li>ESP32</li><li>RMCS-2303 drivers</li><li>Modbus ASCII</li><li>Piezo drive electronics</li><li>IMU integration</li></ul></div>
         <div class="card"><h3>Software</h3><ul><li>Python, C++</li><li>PyTorch</li><li>YOLOv8-pose, SAM</li><li>Omniverse Replicator</li><li>Web interfaces</li></ul></div>
         <div class="card"><h3>Mechanical</h3><ul><li>SolidWorks</li><li>3D printing</li><li>Soft robotics</li><li>Rapid prototyping</li><li>Motor and sensor mounting</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UP NEXT -->
+  <section class="tile canvas" id="next">
+    <div class="inner">
+      <div class="tile-head">
+        <span class="eyebrow">Up next</span>
+        <h2>What I'm learning</h2>
+        <p class="tagline">Moving from classic autonomy toward robots that learn.</p>
+      </div>
+      <div class="cards next-cards">
+        <div class="card"><h3>Reinforcement learning</h3><p>Working through the Hugging Face RL course and building my own RL project.</p></div>
+        <div class="card"><h3>Vision-language-action</h3><p>Building up from RL toward VLA models for robot control.</p></div>
+        <div class="card"><h3>NVIDIA Isaac</h3><p>Aiming at autonomous systems and GPU-accelerated robotics.</p></div>
       </div>
     </div>
   </section>
@@ -1062,14 +1083,50 @@ footer .inner { display: flex; justify-content: space-between; gap: 12px; flex-w
       }
       return out;
     }
-    function finger(ctx, x, y, a, side, f, len, wd, P) {
-      const pts = [[x, y]]; let h = a + side * 0.5 * (1 - f), px = x, py = y;
-      const curl = f * 2.3, M = 14;
-      for (let i = 1; i <= M; i++) { h -= side * curl / M; px += Math.cos(h) * len / M; py += Math.sin(h) * len / M; pts.push([px, py]); }
+    // Finger path in a local frame: x runs from the trunk tip toward the egg, w is the sideways
+    // distance on this finger's side. Closed = run tangent onto the egg outline (offset by the
+    // finger's thickness) and follow it past the widest point, so the two tips never meet.
+    function hugPath(Aw, cx, rFn, thEnd, open, n) {
+      const poly = [];
+      for (let i = 0; i <= 120; i++) { const th = 3.05 - (3.05 - thEnd) * i / 120, r = rFn(th); poly.push([cx + r * Math.cos(th), r * Math.sin(th)]); }
+      let best = 0, bd = 1e9;
+      for (let k = 0; k < poly.length - 1; k++) {
+        const a1 = Math.atan2(poly[k][1] - Aw, poly[k][0]), a2 = Math.atan2(poly[k + 1][1] - poly[k][1], poly[k + 1][0] - poly[k][0]);
+        let d = Math.abs(a1 - a2); if (d > Math.PI) d = 2 * Math.PI - d;
+        if (d < bd) { bd = d; best = k; }
+      }
+      const pts = [[0, Aw]].concat(poly.slice(best)), cum = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      const L = cum[cum.length - 1], closed = [], opened = [];
+      let j = 0;
+      for (let i = 0; i <= n; i++) {
+        const l = L * i / n;
+        while (j < cum.length - 2 && cum[j + 1] < l) j++;
+        const t = (l - cum[j]) / Math.max(1e-12, cum[j + 1] - cum[j]);
+        closed.push([lerp(pts[j][0], pts[j + 1][0], t), lerp(pts[j][1], pts[j + 1][1], t)]);
+        opened.push([l * Math.cos(open), Aw + l * Math.sin(open)]);
+      }
+      return { closed, open: opened };
+    }
+    let hugCache = null, hugKey = -1;
+    function finger(ctx, tip, side, f, R, W1, P) {
+      const off = W1 * 0.32, wd = W1 * 0.55;
+      if (!hugCache || hugKey !== Math.round(R * 100)) {
+        const ax = R, aw = 0.82 * R;
+        const eggR = th => 1 / Math.sqrt(Math.cos(th) ** 2 / (ax * ax) + Math.sin(th) ** 2 / (aw * aw));
+        hugCache = hugPath(off, 1.61 * R, th => eggR(th) + wd * 0.45 + 1.5, 0.95, 0.85, 16);
+        hugKey = Math.round(R * 100);
+      }
+      const e = ease(f), M = hugCache.closed.length - 1;
+      const dx = Math.cos(tip.a), dy = Math.sin(tip.a), nx = -Math.sin(tip.a) * side, ny = Math.cos(tip.a) * side;
+      const pts = hugCache.closed.map((c, i) => {
+        const o = hugCache.open[i], x = lerp(o[0], c[0], e), w = lerp(o[1], c[1], e);
+        return [tip.x + dx * x + nx * w, tip.y + dy * x + ny * w];
+      });
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (let pass = 0; pass < 2; pass++) {
         for (let i = 0; i < M; i++) {
-          const ww = lerp(wd, wd * 0.5, i / M) + (pass ? 0 : 2);
+          const ww = lerp(wd, wd * 0.65, i / M) + (pass ? 0 : 2);
           ctx.strokeStyle = pass ? 'rgba(236,236,241,0.96)' : '#a1a1a6'; ctx.lineWidth = ww;
           ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke();
         }
@@ -1097,9 +1154,11 @@ footer .inner { display: flex; justify-content: space-between; gap: 12px; flex-w
         const eggRest = [rt.x + Math.cos(rt.a) * R * 1.55, rt.y + Math.sin(rt.a) * R * 1.55];
         const eggPos = ph.carry ? [tip.x + Math.cos(tip.a) * R * 1.55, tip.y + Math.sin(tip.a) * R * 1.55] : eggRest;
         ctx.fillStyle = P.bg; ctx.fillRect(0, 0, w, h);
-        // stand
-        const standTop = eggRest[1] + R * 0.95;
-        rr(ctx, eggRest[0] - R * 0.9, standTop, R * 1.8, h - standTop + 6, 6); ctx.fillStyle = P.line; ctx.fill();
+        // stand: a post that stops below the fingers' reach, with a slim cradle under the egg
+        const stTop = eggRest[1] + R * 1.62;
+        rr(ctx, eggRest[0] - R * 0.22, stTop, R * 0.44, h - stTop + 6, 4); ctx.fillStyle = P.line; ctx.fill();
+        ctx.strokeStyle = P.line; ctx.lineWidth = Math.max(2, R * 0.12); ctx.lineCap = 'round';
+        [-1, 1].forEach(sd => { const an = Math.PI / 2 + sd * 0.75; ctx.beginPath(); ctx.moveTo(eggRest[0], stTop); ctx.lineTo(eggRest[0] + Math.cos(an) * R * 0.98, eggRest[1] + Math.sin(an) * R * 0.98); ctx.stroke(); });
         // air lines and mount
         ctx.lineCap = 'round';
         [[-W0 * 0.22, pA], [W0 * 0.22, pB]].forEach(([dx, pr]) => {
@@ -1143,9 +1202,8 @@ footer .inner { display: flex; justify-content: space-between; gap: 12px; flex-w
         });
         // egg, then the two soft fingers around it
         egg(ctx, eggPos[0], eggPos[1], R, ph.carry ? tip.a - Math.PI / 2 : restC[N].a - Math.PI / 2);
-        const nx = Math.cos(tip.a + Math.PI / 2), ny = Math.sin(tip.a + Math.PI / 2), off = W1 * 0.32;
-        finger(ctx, tip.x + nx * off, tip.y + ny * off, tip.a, 1, ph.f, R * 2.3, W1 * 0.55, P);
-        finger(ctx, tip.x - nx * off, tip.y - ny * off, tip.a, -1, ph.f, R * 2.3, W1 * 0.55, P);
+        finger(ctx, tip, 1, ph.f, R, W1, P);
+        finger(ctx, tip, -1, ph.f, R, W1, P);
         // pressure gauges
         const gx = w - 110, gy = 36, gh = h - 100;
         hud(ctx, 'Chamber pressure', w - 16, gy - 12, 'right', P.muted);
