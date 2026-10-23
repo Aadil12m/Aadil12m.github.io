@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Muhammad Aadil, robotics engineer. Warehouse AMR, reconfigurable piezo-jet robot, Isaac Sim synthetic data and a soft elephant-trunk end effector.">
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font: 14px/1.4 system-ui, -apple-system, sans-serif; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Muhammad Aadil</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<style>
+/* Layout: Apple tile stack. Full-bleed tiles alternate canvas / parchment / dark tile; each project tile = headline, tagline, pill CTAs, then its live sim as the "product render".
+   Deliberately single-theme: the light/dark tile rhythm is the design, so every color is set explicitly. */
+:root {
+  color-scheme: light;
+  /* accent: the only interactive color */
+  --primary: #0066cc;
+  --primary-focus: #0071e3;
+  --primary-on-dark: #2997ff;
+  /* text */
+  --ink: #1d1d1f;
+  --ink-80: #333333;
+  --ink-48: #7a7a7a;
+  --on-dark: #ffffff;
+  --body-muted: #cccccc;
+  /* surfaces */
+  --canvas: #ffffff;
+  --parchment: #f5f5f7;
+  --pearl: #fafafc;
+  --tile-1: #272729;
+  --tile-2: #2a2a2c;
+  --tile-3: #252527;
+  --black: #000000;
+  /* hairlines */
+  --divider-soft: #f0f0f0;
+  --hairline: #e0e0e0;
+  --hairline-dark: #3a3a3c;
+  /* status (state only) */
+  --success: #34c759;
+  --danger: #ff3b30;
+  /* type */
+  --f-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --f-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* radius */
+  --r-sm: 8px; --r-md: 11px; --r-lg: 18px; --pill: 9999px;
+  /* spacing */
+  --s-xs: 8px; --s-sm: 12px; --s-md: 17px; --s-lg: 24px; --s-xl: 32px; --s-xxl: 48px; --s-section: 80px;
+}
+
+/* Lenis base styles (from lenis@1.1.13/dist/lenis.css) */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--canvas); color: var(--ink);
+  font-family: var(--f-sans); font-size: 17px; line-height: 1.47; letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--black); }
+p { margin: 0; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); font-weight: 600; text-wrap: balance; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--primary-focus); outline-offset: 3px; border-radius: 4px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* inner wrapper carries the gutter on every full-bleed band */
+.inner {
+  max-width: 1024px; margin: 0 auto;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+}
+.inner.narrow { max-width: 820px; }
+
+/* ---------- global nav ---------- */
+.gnav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: rgba(22, 22, 23, 0.82);
+  -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+}
+.gnav .inner { height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.gnav .brand { color: var(--on-dark); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.gnav nav { display: flex; gap: 22px; }
+.gnav nav a { color: #e8e8ed; font-size: 12px; letter-spacing: -0.01em; }
+.gnav nav a:hover { color: var(--on-dark); text-decoration: none; }
+@media (max-width: 520px) { .gnav nav { gap: 14px; } .gnav nav a.opt { display: none; } }
+
+/* ---------- tiles ---------- */
+.tile { padding-block: var(--s-section); }
+.tile.canvas { background: var(--canvas); color: var(--ink); }
+.tile.parchment { background: var(--parchment); color: var(--ink); }
+.tile.dark { background: var(--tile-1); color: var(--on-dark); }
+.tile.dark3 { background: var(--tile-3); color: var(--on-dark); }
+.tile.dark a, .tile.dark3 a { color: var(--primary-on-dark); }
+.tile-head { text-align: center; display: grid; gap: 10px; justify-items: center; }
+.eyebrow { font-size: 21px; font-weight: 600; letter-spacing: 0.011em; color: var(--ink-48); }
+.tile.dark .eyebrow, .tile.dark3 .eyebrow { color: var(--body-muted); }
+.tile-head h2 { font-size: clamp(36px, 5.4vw, 56px); line-height: 1.07; letter-spacing: -0.015em; }
+.tagline { font-size: clamp(19px, 2.2vw, 28px); line-height: 1.14; letter-spacing: 0.007em; max-width: 30ch; }
+.ctas { display: flex; gap: 14px 22px; flex-wrap: wrap; justify-content: center; align-items: center; margin-top: 10px; }
+.pill {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font: 400 17px/1 var(--f-sans); letter-spacing: -0.022em;
+  padding: 11px 22px; border-radius: var(--pill); border: 1px solid var(--primary);
+  background: var(--primary); color: #fff; cursor: pointer;
+  transition: transform .16s ease-out, background-color .16s ease-out;
+}
+.pill:hover { background: var(--primary-focus); text-decoration: none; }
+.pill:active { transform: scale(.97); }
+.pill.ghost { background: transparent; color: var(--primary); }
+.pill.ghost:hover { background: var(--primary); color: #fff; }
+.tile.dark .pill.ghost, .tile.dark3 .pill.ghost { color: var(--primary-on-dark); border-color: var(--primary-on-dark); }
+.tile.dark .pill.ghost:hover, .tile.dark3 .pill.ghost:hover { background: var(--primary-on-dark); color: var(--black); }
+.more::after { content: " ›"; }
+.badge { font-size: 12px; font-weight: 600; letter-spacing: 0; padding: 3px 10px; border-radius: var(--pill); background: var(--parchment); color: var(--ink-80); }
+.tile.parchment .badge { background: var(--canvas); }
+.tile.dark .badge, .tile.dark3 .badge { background: var(--tile-2); color: var(--body-muted); }
+.badge.live { background: var(--primary); color: #fff; }
+
+/* hero */
+.hero { padding-block: 56px 72px; }
+.hero canvas { display: block; width: 100%; height: clamp(200px, 22vw, 300px); margin: 12px 0 20px; }
+.hero .tagline { margin-inline: auto; text-align: center; }
+
+/* product render (the only shadowed thing) */
+.render {
+  margin: var(--s-xxl) auto 0; max-width: 980px;
+  border-radius: var(--r-lg); overflow: hidden;
+  box-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px;
+}
+.render canvas { display: block; width: 100%; aspect-ratio: 16 / 8.2; max-width: 100%; }
+.render-cap { text-align: center; font-size: 12px; letter-spacing: -0.01em; color: var(--ink-48); margin-top: var(--s-sm); }
+.tile.dark .render-cap, .tile.dark3 .render-cap { color: #86868b; }
+
+/* sim palettes, read by the canvas code */
+.sim-dark { --s-bg: #000000; --s-ink: #f5f5f7; --s-muted: #86868b; --s-line: #3a3a3c; --s-grid: #161618; --s-accent: #2997ff; }
+.sim-white { --s-bg: #ffffff; --s-ink: #1d1d1f; --s-muted: #7a7a7a; --s-line: #e0e0e0; --s-grid: #f0f0f0; --s-accent: #0066cc; }
+.sim-parch { --s-bg: #f5f5f7; --s-ink: #1d1d1f; --s-muted: #7a7a7a; --s-line: #d2d2d7; --s-grid: #e8e8ed; --s-accent: #0066cc; }
+
+/* specs */
+.specs { margin-top: var(--s-xxl); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--hairline); }
+.tile.dark .specs, .tile.dark3 .specs { border-color: var(--hairline-dark); }
+.spec { padding: var(--s-lg) var(--s-md) 0 0; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.spec b { font-family: var(--f-display); font-size: clamp(28px, 3.4vw, 40px); font-weight: 600; line-height: 1.1; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.spec span { font-size: 14px; letter-spacing: -0.016em; color: var(--ink-48); }
+.tile.dark .spec span, .tile.dark3 .spec span { color: #86868b; }
+
+/* prose */
+.prose { margin-top: var(--s-xl); display: grid; gap: var(--s-md); }
+.prose p { max-width: 64ch; }
+.tile.dark .prose p { color: #e8e8ed; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--s-sm); }
+.tags span { font-size: 14px; letter-spacing: -0.016em; padding: 6px 14px; border-radius: var(--pill); border: 1px solid var(--hairline); background: var(--canvas); color: var(--ink-80); }
+.tile.parchment .tags span { background: var(--canvas); }
+.tile.dark .tags span, .tile.dark3 .tags span { background: transparent; border-color: var(--hairline-dark); color: var(--body-muted); }
+
+/* toolkit cards */
+.cards { margin-top: var(--s-xxl); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.card { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--s-lg); display: grid; gap: var(--s-sm); align-content: start; min-width: 0; }
+.card h3 { font-size: 21px; font-weight: 600; letter-spacing: 0.011em; }
+.card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; color: var(--ink-80); }
+
+/* contact */
+.contact-list { margin: var(--s-xxl) auto 0; max-width: 620px; border-top: 1px solid var(--hairline-dark); }
+.crow { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--hairline-dark); align-items: baseline; }
+.crow span:first-child { color: #86868b; font-size: 14px; }
+.crow .v { overflow-wrap: anywhere; }
+#email { user-select: all; color: var(--on-dark); }
+#copyMsg { font-size: 14px; color: var(--success); min-width: 1em; }
+.next { margin: 0 auto; max-width: 620px; display: grid; gap: var(--s-md); color: #e8e8ed; }
+
+footer.tile { padding-block: 40px; }
+footer p { font-size: 12px; letter-spacing: -0.01em; color: var(--ink-48); }
+footer .inner { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .tile { padding-block: 56px; }
+  .hero { padding-block: 36px 56px; }
+  .hero canvas { height: 230px; }
+  .render { margin-top: var(--s-xl); }
+  .render canvas { aspect-ratio: 4 / 3.3; }
+  .specs { grid-template-columns: minmax(0, 1fr); }
+  .spec { padding: var(--s-md) 0; border-bottom: 1px solid var(--hairline); }
+  .tile.dark .spec, .tile.dark3 .spec { border-color: var(--hairline-dark); }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .crow { grid-template-columns: 84px minmax(0, 1fr); }
+}
+
+/* scroll reveal (only armed when JS runs and motion is allowed) */
+.js-reveal [data-reveal] {
+  opacity: 0; transform: translateY(32px);
+  transition: opacity .9s cubic-bezier(.2, .65, .2, 1), transform 1s cubic-bezier(.2, .65, .2, 1);
+  transition-delay: var(--d, 0ms); will-change: opacity, transform;
+}
+.js-reveal [data-reveal="scale"] { transform: translateY(56px) scale(.94); }
+.js-reveal [data-reveal].in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .pill, .jbtn { transition: none; } }
+/* piezo drive pad */
+.jetpad { display: flex; justify-content: center; align-items: center; gap: 28px; flex-wrap: wrap; margin-top: var(--s-lg); }
+.cluster { display: grid; grid-template-columns: repeat(3, 52px); gap: 8px; }
+.cluster.two { grid-template-columns: 52px; }
+.jbtn {
+  width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer;
+  background: rgba(210, 210, 215, 0.64); color: var(--ink);
+  font: 600 19px/1 var(--f-sans); display: grid; place-items: center; align-content: center; gap: 2px;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  transition: transform .15s ease-out, background-color .15s ease-out;
+}
+.jbtn small { font-size: 10px; font-weight: 600; color: var(--ink-48); letter-spacing: 0; }
+.jbtn:hover { background: rgba(210, 210, 215, 0.9); }
+.jbtn.on { background: var(--primary); color: #fff; transform: scale(.95); }
+.jbtn.on small { color: rgba(255, 255, 255, 0.8); }
+.jbtn.wide { width: auto; min-width: 104px; border-radius: 9999px; padding: 0 18px; font-size: 15px; }
+#piezoFig:focus-visible { outline: 2px solid var(--primary-focus); outline-offset: 4px; }
+
+</style>
+</head>
+<body>
+<header class="gnav">
+  <div class="inner">
+    <a class="brand" href="#top">Muhammad Aadil</a>
+    <nav aria-label="Sections">
+      <a href="#amr">AMR</a><a href="#piezo" class="opt">Piezo robot</a><a href="#vial" class="opt">Isaac Sim</a><a href="#research">Research</a><a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="tile canvas hero" id="top">
+    <div class="inner">
+      <div class="tile-head">
+        <span class="eyebrow">Robotics engineer</span>
+        <h1 class="sr">Muhammad Aadil</h1>
+      </div>
+      <canvas id="armCanvas" class="sim-white" aria-label="The name Muhammad Aadil assembles from a scanned point cloud"></canvas>
+      <div class="tile-head">
+        <p class="tagline">I build robots from the chassis up to the autonomy stack.</p>
+        <p style="color:var(--ink-48)">Third-year mechanical engineering student at IIT Bhubaneswar.</p>
+        <div class="ctas">
+          <a class="pill" href="#amr">See the work</a>
+          <a class="pill ghost" href="#contact">Contact me</a>
+          <button class="pill ghost" id="replay" type="button">Scan again</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AMR -->
+  <section class="tile dark" id="amr">
+    <div class="inner">
+      <div class="tile-head">
+        <span class="badge" style="background:var(--success);color:#000">Built</span>
+        <h2>Autonomous Warehouse AMR</h2>
+        <p class="tagline">Scans every rack in a warehouse and builds a complete map of them.</p>
+        <div class="ctas">
+          <a class="pill" href="https://github.com/Aadil12m/Warehouse_AMR" target="_blank" rel="noopener">View the repo</a>
+          <a class="more" href="#contact">Ask for a demo video</a>
+        </div>
+      </div>
+      <figure class="render sim-dark" style="margin-inline:auto"><canvas id="amrCanvas" aria-hidden="true"></canvas></figure>
+      <p class="render-cap">Illustration: the robot drives the aisles, maps the walls with LiDAR and marks each rack bay once it scans it.</p>
+      <div class="inner narrow" style="padding:0">
+        <div class="specs">
+          <div class="spec"><b>RMCS-2303</b><span>Motor drivers over Modbus ASCII</span></div>
+          <div class="spec"><b>ESP32</b><span>Low-level motor control</span></div>
+          <div class="spec"><b>Python + C++</b><span>ROS 2 Humble</span></div>
+        </div>
+        <div class="prose">
+          <p>The robot drives the aisles on LiDAR-based autonomy, scans each rack it passes and stitches the scans into a map of the warehouse's racks. I also built a web interface for it.</p>
+          <p>An ESP32 drives the mecanum wheels through RMCS-2303 motor drivers over Modbus ASCII. Most of the code is Python, with some C++. Nav2, SLAM Toolbox and an EKF handle navigation and localization, and I fried more than one motor driver during bring-up.</p>
+          <div class="tags"><span>2D LiDAR</span><span>Nav2</span><span>SLAM Toolbox</span><span>EKF</span><span>Modbus ASCII</span><span>Web interface</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIEZO -->
+  <section class="tile parchment" id="piezo">
+    <div class="inner">
+      <div class="tile-head">
+        <span class="badge">In progress</span>
+        <h2>Reconfigurable Piezo-Jet Robot</h2>
+        <p class="tagline">Six hinged jet modules that fold into a box to swim and open up to hunt.</p>
+      </div>
+      <figure class="render sim-white" id="piezoFig" tabindex="0" aria-label="Interactive piezo-jet robot. W A S D to move, Q and E to rise and sink, R to reconfigure."><canvas id="piezoCanvas" aria-hidden="true"></canvas></figure>
+      <div class="jetpad" id="jetPad" role="group" aria-label="Drive the cube">
+        <div class="cluster">
+          <span></span>
+          <button class="jbtn" type="button" data-dir="py" aria-label="Move away (W)">↗<small>W</small></button>
+          <span></span>
+          <button class="jbtn" type="button" data-dir="nx" aria-label="Move left (A)">←<small>A</small></button>
+          <button class="jbtn" type="button" data-dir="ny" aria-label="Move toward you (S)">↙<small>S</small></button>
+          <button class="jbtn" type="button" data-dir="px" aria-label="Move right (D)">→<small>D</small></button>
+        </div>
+        <div class="cluster two">
+          <button class="jbtn" type="button" data-dir="pz" aria-label="Rise (Q)">↑<small>Q</small></button>
+          <button class="jbtn" type="button" data-dir="nz" aria-label="Sink (E)">↓<small>E</small></button>
+        </div>
+        <button class="jbtn wide" type="button" id="foldBtn" aria-pressed="false">Open<small>R</small></button>
+      </div>
+      <p class="render-cap">Hold W A S D to swim and Q or E to rise and sink. Line up under a sinking fish, press R to open into hunting form, then press R again to fold and trap it. The robot can only swim while folded, and it plays on its own when you leave it alone.</p>
+      <div class="inner narrow" style="padding:0">
+        <div class="specs">
+          <div class="spec"><b>6</b><span>MPJDU modules</span></div>
+          <div class="spec"><b>BNO086</b><span>Onboard IMU</span></div>
+          <div class="spec"><b>≈ 80 g</b><span>Total mass</span></div>
+        </div>
+        <div class="prose">
+          <p>With a small team under a professor, I'm recreating the reconfigurable robot from Zhang et al. (2025, <i>Sensors &amp; Actuators A</i>, vol. 388). Six MPJDU modules, each driven by a piezo disc, connect through hinges. The paper's robot opens into a hunting form to trap small organisms and folds into a box, its submerged form, to carry them. Firing the module on one face pushes the box the other way, so it can move along any axis.</p>
+          <p>We're designing a better signal generator and amplifier to drive the piezos. A BNO086 IMU on board lets us measure the thrust from each module on its own.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIAL -->
+  <section class="tile dark3" id="vial">
+    <div class="inner">
+      <div class="tile-head">
+        <span class="badge">In progress</span>
+        <h2>Synthetic Vial Inspection</h2>
+        <p class="tagline">Rockwell Automation and NVIDIA Innovation Lab, Fall 2026.</p>
+      </div>
+      <figure class="render sim-dark"><canvas id="vialCanvas" aria-hidden="true"></canvas></figure>
+      <p class="render-cap">Illustration: synthetic frames with shifting light, each vial labelled by the generator.</p>
+      <div class="inner narrow" style="padding:0">
+        <div class="specs">
+          <div class="spec"><b>Isaac Sim</b><span>Scene building</span></div>
+          <div class="spec"><b>Replicator</b><span>Labelled image generation</span></div>
+          <div class="spec"><b>Vials</b><span>Final inspection track</span></div>
+        </div>
+        <div class="prose">
+          <p>Our team chose final vial inspection for pharmaceutical lines. I own the simulation side: I build the scenes in NVIDIA Isaac Sim and use Replicator to generate labelled images for training the inspection model.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESEARCH -->
+  <section class="tile canvas" id="research">
+    <div class="inner">
+      <div class="tile-head">
+        <span class="eyebrow">Research internship · IIT Gandhinagar</span>
+        <h2>Elephant-Trunk End Effector</h2>
+        <p class="tagline">A soft, biomimetic gripper modeled on the finger-like tip of an elephant's trunk.</p>
+      </div>
+      <figure class="render sim-parch"><canvas id="trunkCanvas" aria-hidden="true"></canvas></figure>
+      <p class="render-cap">Illustration: one chamber inflates to bend the soft body, and two finger-like tips curl around an egg to lift it.</p>
+      <div class="inner narrow" style="padding:0">
+        <div class="prose">
+          <p>I worked in a soft robotics lab on the design of an end effector that copies the way an elephant's trunk tip pinches and holds objects with its finger-like extensions. A soft gripper bends by inflating chambers in a silicone body, so it can wrap around fragile objects such as an egg.</p>
+          <p>On the vision side, I built a PyTorch pipeline that pairs YOLOv8-pose keypoint detection with Segment Anything, tuned for real-time inference on GPU.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOLKIT -->
+  <section class="tile parchment" id="toolkit">
+    <div class="inner">
+      <div class="tile-head">
+        <h2>Toolkit</h2>
+        <p class="tagline">The tools I used on the robots above.</p>
+      </div>
+      <div class="cards">
+        <div class="card"><h3>Autonomy</h3><ul><li>ROS 2 Humble</li><li>Nav2</li><li>SLAM Toolbox</li><li>EKF sensor fusion</li><li>2D LiDAR</li><li>Gazebo, Isaac Sim</li></ul></div>
+        <div class="card"><h3>Embedded</h3><ul><li>ESP32</li><li>RMCS-2303 drivers</li><li>Modbus ASCII</li><li>Piezo drive electronics</li><li>IMU integration</li></ul></div>
+        <div class="card"><h3>Software</h3><ul><li>Python, C++</li><li>PyTorch</li><li>YOLOv8-pose, SAM</li><li>Omniverse Replicator</li><li>Web interfaces</li></ul></div>
+        <div class="card"><h3>Mechanical</h3><ul><li>SolidWorks</li><li>3D printing</li><li>Soft robotics</li><li>Rapid prototyping</li><li>Motor and sensor mounting</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="tile dark" id="contact">
+    <div class="inner">
+      <div class="tile-head"><h2>Contact me</h2></div>
+      <div class="contact-list">
+        <div class="crow"><span>Email</span><span class="v" id="email">mdaadil12m@gmail.com</span></div>
+        <div class="crow"><span>GitHub</span><span class="v"><a href="https://github.com/Aadil12m" target="_blank" rel="noopener">github.com/Aadil12m</a></span></div>
+        <div class="crow"><span>LinkedIn</span><span class="v"><a href="https://www.linkedin.com/in/muhammad-aadil12m" target="_blank" rel="noopener">linkedin.com/in/muhammad-aadil12m</a></span></div>
+      </div>
+      <div class="ctas" style="margin-top:var(--s-xl)">
+        <button class="pill" id="copyBtn" type="button">Copy email</button>
+        <span id="copyMsg" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="tile parchment">
+  <div class="inner">
+    <p>Muhammad Aadil · IIT Bhubaneswar</p>
+    <p>I drew the animations on this page in code to illustrate each project.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+(function () {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- Lenis smooth scroll ----------
+  let lenis = null;
+  if (!reduce && typeof window.Lenis === 'function') {
+    try { lenis = new window.Lenis({ duration: 1.15, easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true }); }
+    catch (e) { lenis = null; }
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function (ev) {
+      const id = a.getAttribute('href');
+      const el = id === '#top' ? document.body : document.querySelector(id);
+      if (!el) return;
+      ev.preventDefault();
+      if (lenis) lenis.scrollTo(id === '#top' ? 0 : el, { offset: -44 });
+      else window.scrollTo({ top: id === '#top' ? 0 : el.getBoundingClientRect().top + window.scrollY - 44, behavior: reduce ? 'auto' : 'smooth' });
+    });
+  });
+
+  // ---------- copy email ----------
+  const copyBtn = document.getElementById('copyBtn'), copyMsg = document.getElementById('copyMsg'), emailEl = document.getElementById('email');
+  copyBtn.addEventListener('click', function () {
+    const fallback = function () {
+      const r = document.createRange(); r.selectNodeContents(emailEl);
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      copyMsg.textContent = 'Selected. Press Ctrl or Cmd + C.';
+    };
+    try { navigator.clipboard.writeText(emailEl.textContent.trim()).then(function () { copyMsg.textContent = 'Copied'; }, fallback); }
+    catch (e) { fallback(); }
+  });
+
+  // ---------- stage machinery ----------
+  const OK = '#34c759', BAD = '#ff3b30';
+  const stages = [];
+  function palette(el) {
+    const cs = getComputedStyle(el.closest('[class*="sim-"]') || el);
+    const g = k => cs.getPropertyValue(k).trim();
+    return { bg: g('--s-bg') || '#fff', ink: g('--s-ink') || '#1d1d1f', muted: g('--s-muted') || '#7a7a7a', line: g('--s-line') || '#e0e0e0', grid: g('--s-grid') || '#f0f0f0', accent: g('--s-accent') || '#0066cc' };
+  }
+  function makeStage(canvas, sim, interactive) {
+    const s = { canvas, ctx: canvas.getContext('2d'), w: 0, h: 0, dpr: 1, visible: true, last: null, sim, interactive: !!interactive, P: palette(canvas) };
+    s.resize = function () {
+      const r = { width: canvas.clientWidth, height: canvas.clientHeight };
+      s.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const W = Math.max(1, Math.round(r.width * s.dpr)), H = Math.max(1, Math.round(r.height * s.dpr));
+      if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+      const changed = Math.abs(r.width - s.w) > 0.5 || Math.abs(r.height - s.h) > 0.5;
+      s.w = r.width; s.h = r.height;
+      if (changed && sim.resize) sim.resize(s.w, s.h);
+      s.render(0);
+    };
+    s.render = function (dt) {
+      if (!s.w || !s.h) return;
+      s.ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
+      s.ctx.shadowColor = 'transparent'; s.ctx.shadowBlur = 0;
+      sim.draw(s.ctx, s.w, s.h, dt, s.P);
+    };
+    stages.push(s);
+    try { new ResizeObserver(s.resize).observe(canvas); } catch (e) { window.addEventListener('resize', s.resize); }
+    try { new IntersectionObserver(es => es.forEach(e => { s.visible = e.isIntersecting; })).observe(canvas); } catch (e) {}
+    s.resize();
+    return s;
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => stages.forEach(s => s.render(0)));
+
+  function loop(t) {
+    if (lenis) lenis.raf(t);
+    for (const s of stages) {
+      if (!s.visible || (reduce && !s.interactive)) { s.last = null; continue; }
+      const dt = s.last == null ? 0 : Math.min(0.05, (t - s.last) / 1000);
+      s.last = t; s.render(dt);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // helpers
+  const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+  function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function alpha(col, a) {
+    const m = /^#([0-9a-f]{6})$/i.exec((col || '').trim());
+    if (!m) return col;
+    const n = parseInt(m[1], 16);
+    return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + clamp(a, 0, 1).toFixed(3) + ')';
+  }
+  const SANS = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif';
+  const DISP = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif';
+  function hud(ctx, text, x, y, align, col, weight) {
+    ctx.font = (weight || 400) + ' 12px ' + SANS; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = col; ctx.fillText(text, x, y);
+  }
+  function metalLink(ctx, x1, y1, x2, y2, wd) {
+    const len = Math.hypot(x2 - x1, y2 - y1), a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.save(); ctx.translate(x1, y1); ctx.rotate(a);
+    const g = ctx.createLinearGradient(0, -wd / 2, 0, wd / 2);
+    g.addColorStop(0, '#fbfbfd'); g.addColorStop(0.45, '#e3e3e8'); g.addColorStop(1, '#a1a1a6');
+    rr(ctx, -wd / 2, -wd / 2, len + wd, wd, wd / 2);
+    ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#86868b'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
+  function cap(ctx, x, y, r, ring) {
+    const g = ctx.createRadialGradient(x - r * .3, y - r * .3, r * .1, x, y, r);
+    g.addColorStop(0, '#48484a'); g.addColorStop(1, '#1d1d1f');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    if (ring) { ctx.strokeStyle = ring; ctx.lineWidth = Math.max(1.5, r * .14); ctx.beginPath(); ctx.arc(x, y, r * .62, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.fillStyle = '#86868b'; ctx.beginPath(); ctx.arc(x, y, r * .2, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // =====================================================================
+  // HERO: the name assembles from a LiDAR-style point cloud, then resolves to type.
+  // After that, the pointer dissolves the letters back into points around it.
+  // =====================================================================
+  const nameSim = (function () {
+    const START = 0.35, SWEEP = 1.9, LOCK = 0.6, SOLID = 0.6;
+    let pts = [], W = 0, H = 0, t = 0, solid = 0, done = false, lines = [], fs = 0, y0 = 0, lh = 0;
+    let mouse = null, hole = 0, holeAt = null;
+    function font(px) { return '700 ' + px + 'px ' + DISP; }
+    function setTrack(c) { if ('letterSpacing' in c) c.letterSpacing = (-0.02 * fs).toFixed(1) + 'px'; }
+    function build(w, h) {
+      W = w; H = h; t = 0; solid = 0; done = false;
+      const off = document.createElement('canvas');
+      off.width = Math.max(1, Math.round(w)); off.height = Math.max(1, Math.round(h));
+      const c = off.getContext('2d');
+      lines = w < 620 ? ['Muhammad', 'Aadil'] : ['Muhammad Aadil'];
+      fs = lines.length > 1 ? Math.min(h * 0.4, 190) : Math.min(h * 0.62, 190);
+      c.font = font(fs); setTrack(c);
+      const widest = Math.max.apply(null, lines.map(l => c.measureText(l).width));
+      fs = Math.floor(fs * Math.min(1, (w * 0.94) / widest));
+      lh = fs * 1.02; y0 = h / 2 - (lh * lines.length) / 2 + lh / 2;
+      c.font = font(fs); setTrack(c); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#000';
+      lines.forEach((l, i) => c.fillText(l, w / 2, y0 + i * lh));
+      let data;
+      try { data = c.getImageData(0, 0, off.width, off.height).data; } catch (e) { data = null; }
+      pts = [];
+      if (!data) return;
+      let step = Math.max(2, Math.round(fs / 34));
+      const collect = st => {
+        const out = [];
+        for (let y = 0; y < off.height; y += st) for (let x = 0; x < off.width; x += st) {
+          if (data[(y * off.width + x) * 4 + 3] > 140) out.push([x, y]);
+        }
+        return out;
+      };
+      let tg = collect(step);
+      while (tg.length > 5200) { step++; tg = collect(step); }
+      pts = tg.map(([x, y]) => {
+        const z = Math.random();
+        return { tx: x, ty: y, sx: Math.random() * w, sy: h * 0.08 + Math.random() * h * 0.84, z, ph: Math.random() * 6.28, lock: null, fx: 0, fy: 0, ox: 0, oy: 0 };
+      });
+      pts.size = Math.max(1.4, step * 0.62);
+    }
+    function scanX() { return lerp(-0.06 * W, 1.06 * W, clamp((t - START) / SWEEP, 0, 1)); }
+    function drawText(ctx, P, a) {
+      ctx.globalAlpha = a; ctx.fillStyle = P.ink; ctx.font = font(fs); setTrack(ctx);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      lines.forEach((l, i) => ctx.fillText(l, W / 2, y0 + i * lh));
+      ctx.globalAlpha = 1; if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+    }
+    return {
+      resize(w, h) { build(w, h); if (reduce) { t = 99; solid = 1; done = true; } },
+      rebuild() { if (W) { build(W, H); if (reduce) { t = 99; solid = 1; done = true; } } },
+      replay() { t = 0; solid = 0; done = false; pts.forEach(p => { p.lock = null; }); },
+      pointer(x, y) { mouse = { x, y }; holeAt = { x, y }; },
+      leave() { mouse = null; },
+      draw(ctx, w, h, dt, P) {
+        t += dt;
+        ctx.fillStyle = P.bg; ctx.fillRect(0, 0, w, h);
+        if (!pts.length) { drawText(ctx, P, 1); return; }
+        const sx = scanX(), sz = pts.size;
+        // lock points as the scan line passes them
+        if (!done) {
+          for (const p of pts) {
+            if (p.lock === null && sx >= p.tx) {
+              p.lock = t;
+              p.fx = p.sx + Math.sin(t * 0.8 + p.ph) * 14 * p.z; p.fy = p.sy + Math.cos(t * 0.6 + p.ph) * 10 * p.z;
+            }
+          }
+          const allIn = t > START + SWEEP + LOCK;
+          if (allIn) { solid = Math.min(1, solid + dt / SOLID); if (solid >= 1) done = true; }
+          // scan band
+          if (t > START && t < START + SWEEP + 0.1) {
+            const gw = Math.max(60, w * 0.08);
+            const g = ctx.createLinearGradient(sx - gw, 0, sx, 0);
+            g.addColorStop(0, alpha(P.accent, 0)); g.addColorStop(1, alpha(P.accent, 0.14));
+            ctx.fillStyle = g; ctx.fillRect(sx - gw, 0, gw, h);
+            ctx.fillStyle = P.accent; ctx.fillRect(Math.round(sx), 0, 1.5, h);
+          }
+          // points
+          const pa = 1 - solid;
+          for (const p of pts) {
+            let x, y, a, col;
+            if (p.lock === null) {
+              x = p.sx + Math.sin(t * 0.8 + p.ph) * 14 * p.z; y = p.sy + Math.cos(t * 0.6 + p.ph) * 10 * p.z;
+              a = (0.12 + 0.3 * p.z) * Math.min(1, t * 3); col = P.muted;
+            } else {
+              const k = ease(clamp((t - p.lock) / LOCK, 0, 1));
+              x = lerp(p.fx, p.tx, k); y = lerp(p.fy, p.ty, k);
+              a = 1; col = k < 1 ? P.accent : P.ink;
+            }
+            ctx.globalAlpha = a * pa; ctx.fillStyle = col; ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
+          }
+          ctx.globalAlpha = 1;
+          if (solid > 0) drawText(ctx, P, solid);
+          const locked = pts.reduce((n, p) => n + (p.lock !== null ? 1 : 0), 0);
+          hud(ctx, locked.toLocaleString() + ' / ' + pts.length.toLocaleString() + ' points', w - 4, h - 2, 'right', alpha(P.muted, 1 - solid) || P.muted);
+          return;
+        }
+        // resolved: pointer opens a hole in the type and scatters the points under it
+        const R = Math.max(70, fs * 0.55);
+        hole = lerp(hole, mouse ? 1 : 0, reduce ? 1 : 1 - Math.exp(-dt * 8));
+        drawText(ctx, P, 1);
+        if (hole > 0.01 && holeAt) {
+          const hr = R * hole;
+          ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+          const g = ctx.createRadialGradient(holeAt.x, holeAt.y, hr * 0.35, holeAt.x, holeAt.y, hr);
+          g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(holeAt.x, holeAt.y, hr, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          // repaint background under the hole (destination-out clears to transparent)
+          ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = P.bg; ctx.fillRect(0, 0, w, h); ctx.restore();
+          for (const p of pts) {
+            const dx = p.tx - holeAt.x, dy = p.ty - holeAt.y, d = Math.hypot(dx, dy);
+            if (d > R * 1.25) { p.ox *= 0.8; p.oy *= 0.8; continue; }
+            const push = mouse ? Math.max(0, (R - d) / R) * 26 : 0;
+            const gx = d > 0 ? dx / d * push : 0, gy = d > 0 ? dy / d * push : 0;
+            p.ox = lerp(p.ox, gx, 0.2); p.oy = lerp(p.oy, gy, 0.2);
+            const vis = clamp((1 - d / (R * 1.1)) * 2, 0, 1) * hole;
+            if (vis <= 0.01) continue;
+            ctx.globalAlpha = vis; ctx.fillStyle = d < R * 0.5 ? P.accent : P.ink;
+            ctx.fillRect(p.tx + p.ox - sz / 2, p.ty + p.oy - sz / 2, sz, sz);
+          }
+          ctx.globalAlpha = 1;
+          if (mouse) { ctx.strokeStyle = alpha(P.accent, 0.35); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(holeAt.x, holeAt.y, R, 0, Math.PI * 2); ctx.stroke(); }
+        }
+      }
+    };
+  })();
+
+  // =====================================================================
+  // AMR: drives the aisles, LiDAR builds the map, rack bays get scanned
+  // =====================================================================
+  const amrSim = (function () {
+    const WM = 10, HM = 6.4;
+    const racks = [[6.3, 0.7, 3.0, 0.8], [6.3, 2.75, 3.0, 0.8], [6.3, 4.85, 3.0, 0.8]];
+    const rects = racks.concat([[0.8, 0.7, 1.6, 1.2], [1.1, 5.0, 0.7, 0.7], [3.4, 5.35, 1.3, 0.6]]);
+    const segs = [[0.2, 0.2, 9.8, 0.2], [9.8, 0.2, 9.8, 6.2], [9.8, 6.2, 0.2, 6.2], [0.2, 6.2, 0.2, 3.9], [0.2, 2.6, 0.2, 0.2]];
+    rects.forEach(([x, y, w, h]) => segs.push([x, y, x + w, y], [x + w, y, x + w, y + h], [x + w, y + h, x, y + h], [x, y + h, x, y]));
+    const path = [[1.8, 2.6], [5.6, 2.15], [9.0, 2.15], [5.6, 2.15], [5.6, 4.2], [9.0, 4.2], [5.6, 4.2], [2.9, 4.1], [1.8, 2.6]];
+    const BAYS = 6, bays = [];
+    racks.forEach(([x, y, w, h], r) => { for (let k = 0; k < BAYS; k++) bays.push({ r, x: x + (k + 0.5) * w / BAYS, y: y + h / 2, bw: w / BAYS, bh: h, x0: x + k * w / BAYS, y0: y }); });
+    const lens = []; let total = 0;
+    for (let i = 0; i < path.length - 1; i++) { const l = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]); lens.push(l); total += l; }
+    let T = 0.5, S = 1, ox = 0, oy = 0, lap = -1, scanned = new Set(), map = new Map();
+    function at(s) {
+      s = ((s % total) + total) % total;
+      for (let i = 0; i < lens.length; i++) {
+        if (s <= lens[i]) { const k = s / lens[i]; return [lerp(path[i][0], path[i + 1][0], k), lerp(path[i][1], path[i + 1][1], k)]; }
+        s -= lens[i];
+      }
+      return path[0];
+    }
+    function cast(px, py, a, R) {
+      const dx = Math.cos(a), dy = Math.sin(a); let best = R;
+      for (const s of segs) {
+        const ex = s[2] - s[0], ey = s[3] - s[1], den = dx * ey - dy * ex;
+        if (Math.abs(den) < 1e-9) continue;
+        const fx = s[0] - px, fy = s[1] - py, t = (fx * ey - fy * ex) / den, u = (fx * dy - fy * dx) / den;
+        if (t > 0 && u >= 0 && u <= 1 && t < best) best = t;
+      }
+      return best < R ? best : null;
+    }
+    function sense(rx, ry) {
+      for (let i = 0; i < 180; i++) {
+        const a = i / 180 * Math.PI * 2, d = cast(rx, ry, a, 5.5);
+        if (d === null) continue;
+        const hx = rx + Math.cos(a) * d, hy = ry + Math.sin(a) * d, key = Math.round(hx * 12) + ',' + Math.round(hy * 12);
+        if (!map.has(key)) map.set(key, [Math.round(hx * 12) / 12, Math.round(hy * 12) / 12]);
+      }
+      const near = [];
+      bays.forEach((b, i) => { if (Math.abs(b.x - rx) < 0.3 && Math.abs(b.y - ry) < 1.2) { scanned.add(i); near.push(b); } });
+      return near;
+    }
+    return {
+      resize(w, h) { S = Math.min((w - 32) / WM, (h - 40) / HM); ox = (w - WM * S) / 2; oy = (h - 14 - HM * S) / 2; },
+      draw(ctx, w, h, dt, P) {
+        T += dt;
+        const X = x => ox + x * S, Y = y => oy + y * S;
+        const sNow = T * 0.75, thisLap = Math.floor(sNow / total);
+        if (reduce) { for (let s = 0; s < total; s += 0.08) { const p = at(s); sense(p[0], p[1]); } }
+        else if (thisLap !== lap) { lap = thisLap; scanned.clear(); map.clear(); }
+        const [rx, ry] = at(sNow), th = 0.12 * Math.sin(T * 0.5);
+        const near = sense(rx, ry);
+        ctx.fillStyle = P.bg; ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = P.grid; ctx.lineWidth = 1; ctx.beginPath();
+        for (let x = 0; x <= WM; x++) { ctx.moveTo(X(x) + .5, Y(0)); ctx.lineTo(X(x) + .5, Y(HM)); }
+        for (let y = 0; y <= HM; y++) { ctx.moveTo(X(0), Y(y) + .5); ctx.lineTo(X(WM), Y(y) + .5); }
+        ctx.stroke();
+        // non-rack obstacles
+        rects.slice(3).forEach(([x, y, rw, rh]) => { rr(ctx, X(x), Y(y), rw * S, rh * S, 3); ctx.fillStyle = P.line; ctx.fill(); });
+        // rack bays: grey until scanned
+        bays.forEach((b, i) => {
+          rr(ctx, X(b.x0) + 1.5, Y(b.y0) + 1.5, b.bw * S - 3, b.bh * S - 3, 3);
+          ctx.fillStyle = scanned.has(i) ? alpha(P.accent, .85) : P.line; ctx.fill();
+        });
+        // scan cone to bays in view
+        near.forEach(b => {
+          const ty = b.y < ry ? b.y0 + b.bh : b.y0;
+          ctx.fillStyle = alpha(P.accent, .16); ctx.beginPath();
+          ctx.moveTo(X(rx), Y(ry)); ctx.lineTo(X(b.x0), Y(ty)); ctx.lineTo(X(b.x0 + b.bw), Y(ty)); ctx.closePath(); ctx.fill();
+        });
+        // map built so far
+        ctx.fillStyle = P.ink;
+        map.forEach(p => ctx.fillRect(X(p[0]) - 1, Y(p[1]) - 1, 2, 2));
+        ctx.setLineDash([4, 6]); ctx.strokeStyle = P.muted; ctx.lineWidth = 1;
+        ctx.beginPath(); path.forEach((p, i) => i ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1]))); ctx.stroke(); ctx.setLineDash([]);
+        if (!reduce) {
+          const sweep = (T * 4) % (Math.PI * 2), d = cast(rx, ry, sweep, 5.5) || 5.5;
+          ctx.strokeStyle = alpha(P.accent, .55); ctx.lineWidth = 1; ctx.beginPath();
+          ctx.moveTo(X(rx), Y(ry)); ctx.lineTo(X(rx + Math.cos(sweep) * d), Y(ry + Math.sin(sweep) * d)); ctx.stroke();
+        }
+        ctx.save(); ctx.translate(X(rx), Y(ry)); ctx.rotate(th);
+        const L = 0.62 * S, Wd = 0.46 * S, wl = 0.2 * S, ww = 0.09 * S;
+        [[1, -1, 1], [1, 1, -1], [-1, -1, -1], [-1, 1, 1]].forEach(([sx, sy, d]) => {
+          const cx = sx * (L / 2 - wl / 2 - 1), cy = sy * (Wd / 2 + ww / 2);
+          rr(ctx, cx - wl / 2, cy - ww / 2, wl, ww, 2); ctx.fillStyle = '#3a3a3c'; ctx.fill();
+          ctx.strokeStyle = '#86868b'; ctx.lineWidth = 1; ctx.beginPath();
+          for (let i = -2; i <= 2; i++) { const px = cx + i * wl / 5; ctx.moveTo(px - d * ww / 2, cy - ww / 2); ctx.lineTo(px + d * ww / 2, cy + ww / 2); }
+          ctx.stroke();
+        });
+        const g = ctx.createLinearGradient(0, -Wd / 2, 0, Wd / 2);
+        g.addColorStop(0, '#f5f5f7'); g.addColorStop(1, '#a1a1a6');
+        rr(ctx, -L / 2, -Wd / 2, L, Wd, 5); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#86868b'; ctx.stroke();
+        cap(ctx, L * 0.08, 0, 0.09 * S, P.accent);
+        ctx.restore();
+        hud(ctx, 'Rack bays scanned  ' + scanned.size + ' / ' + bays.length, 16, h - 12, 'left', P.accent, 600);
+        hud(ctx, 'Map cells  ' + map.size, w - 16, h - 12, 'right', P.muted);
+      }
+    };
+  })();
+
+  // =====================================================================
+  // PIEZO: six hinged MPJDU modules. Submerged form = box, hunting form = open net.
+  // Fish sink from the top; open under one, then fold to trap it.
+  // =====================================================================
+  const piezoSim = (function () {
+    const DIR = { px: [1, 0, 0], nx: [-1, 0, 0], py: [0, 1, 0], ny: [0, -1, 0], pz: [0, 0, 1], nz: [0, 0, -1] };
+    const OPP = { px: 'nx', nx: 'px', py: 'ny', ny: 'py', pz: 'nz', nz: 'pz' };
+    const NAME = { px: '+X', nx: '−X', py: '+Y', ny: '−Y', pz: '+Z', nz: '−Z' };
+    const ORDER = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
+    const B = { x: 3.4, y: 1.4, z: 1.5 }, DEPTH = 0.45;
+    let T = 0, pos = [-1, 0, -0.8], vel = [0, 0, 0], rings = [], emitT = 0, lastUser = -99;
+    let fold = 1, foldGoal = 1, fish = [], spawnT = 0.8, caught = 0, missed = 0, trapT = 0, pops = [];
+    const hold = {};
+    let s = 1, cx = 0, cy = 0, onChange = null;
+
+    const userActive = () => ORDER.some(k => hold[k]) || T - lastUser < 6;
+    function aiHold() {
+      const h = {};
+      const trapped = fish.filter(f => f.trapped);
+      const free = fish.filter(f => !f.trapped && !f.escaping).sort((a, b) => a.z - b.z);
+      let tx = pos[0], ty = pos[1];
+      const tz = -0.9;
+      if (trapped.length) foldGoal = 1;
+      else if (free.length) {
+        const f = free[0]; tx = f.x; ty = f.y;
+        const above = f.z - (pos[2] - 0.5), dist = Math.hypot(f.x - pos[0], f.y - pos[1]);
+        foldGoal = foldGoal < 0.5 ? ((above > -0.2 && dist < 1.2) ? 0 : 1) : ((above < 1.9 && dist < 0.3) ? 0 : 1);
+      } else foldGoal = 1;
+      const err = [tx - pos[0], ty - pos[1], tz - pos[2]];
+      ['x', 'y', 'z'].forEach((a, i) => {
+        const e = err[i] - vel[i] * 0.9;
+        if (e > 0.12) h['p' + a] = true; else if (e < -0.12) h['n' + a] = true;
+      });
+      return ORDER.filter(k => h[k]);
+    }
+    let blocked = false;
+    function active() {
+      const user = ORDER.filter(k => hold[k]);
+      const canSwim = fold > 0.98 && foldGoal > 0.5;
+      if (user.length) { lastUser = T; blocked = !canSwim; return canSwim ? user : []; }
+      blocked = false;
+      if (reduce || userActive()) return [];
+      const ai = aiHold();
+      return canSwim ? ai : [];
+    }
+    function proj(x, y, z) { return [cx + (x + y * DEPTH * 0.85) * s, cy - (z + y * DEPTH * 0.6) * s]; }
+    function poly(ctx, pts) { ctx.beginPath(); pts.forEach((p, i) => { const q = proj(p[0], p[1], p[2]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); }
+    function onNet(dx, dy) { return (Math.abs(dx) <= 0.62 && Math.abs(dy) <= 1.62) || (Math.abs(dy) <= 0.62 && dx >= -1.62 && dx <= 2.62); }
+
+    // the six modules for a fold value (1 = box, 0 = flat net)
+    function modules() {
+      const phi = fold * Math.PI / 2, c = Math.cos(phi), sn = Math.sin(phi);
+      const z0 = pos[2] - 0.5, P0 = (lx, ly, lz) => [pos[0] + lx, pos[1] + ly, z0 + lz];
+      const out = [{ k: 'nz', pts: [P0(-.5, -.5, 0), P0(.5, -.5, 0), P0(.5, .5, 0), P0(-.5, .5, 0)] }];
+      const flap = (k, d, p) => {
+        const pt = (u, v) => P0(0.5 * d[0] + u * c * d[0] + v * p[0], 0.5 * d[1] + u * c * d[1] + v * p[1], u * sn);
+        out.push({ k, pts: [pt(0, -.5), pt(1, -.5), pt(1, .5), pt(0, .5)] });
+      };
+      flap('px', [1, 0], [0, 1]); flap('nx', [-1, 0], [0, 1]); flap('py', [0, 1], [1, 0]); flap('ny', [0, -1], [1, 0]);
+      const c2 = Math.cos(2 * phi), s2 = Math.sin(2 * phi);
+      const tp = (u, v) => P0(0.5 + c + u * c2, v, sn + u * s2);
+      out.push({ k: 'pz', pts: [tp(0, -.5), tp(1, -.5), tp(1, .5), tp(0, .5)] });
+      out.forEach(m => {
+        m.c = [0, 1, 2].map(i => (m.pts[0][i] + m.pts[1][i] + m.pts[2][i] + m.pts[3][i]) / 4);
+        const a = m.pts[0], b = m.pts[1], d = m.pts[3];
+        const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [d[0] - a[0], d[1] - a[1], d[2] - a[2]];
+        const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+        const L = Math.hypot(n[0], n[1], n[2]) || 1;
+        m.n = n.map(x => Math.abs(x / L));
+        m.key = m.c[1] - m.c[2] - m.c[0] * 0.5;
+      });
+      return out.sort((a, b) => b.key - a.key);
+    }
+    function grey(t) { const a = [142, 142, 147], b = [251, 251, 253]; return 'rgb(' + a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',') + ')'; }
+    function drawRing(ctx, r, P) {
+      const q = proj(r.p[0], r.p[1], r.p[2]), rad = (0.12 + r.age * 0.35) * s;
+      ctx.strokeStyle = alpha(P.accent, (1 - r.age / 1.3) * 0.8); ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.ellipse(q[0], q[1], rad * (r.d[0] ? 0.45 : 1), rad * (r.d[2] ? 0.45 : 1), 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    function drawFish(ctx, f, P) {
+      const q = proj(f.x, f.y, f.z), L = 0.42 * s, wig = Math.sin(T * 9 + f.ph) * 0.35;
+      const dirx = f.trapped ? 1 : (Math.cos(T * 1.5 + f.ph) >= 0 ? 1 : -1);
+      ctx.save(); ctx.translate(q[0], q[1]); ctx.scale(dirx, 1); ctx.rotate(f.trapped ? 0 : (f.escaping ? -0.4 : 0.25));
+      ctx.globalAlpha = f.a;
+      ctx.fillStyle = P.ink;
+      ctx.beginPath(); ctx.ellipse(0, 0, L * 0.5, L * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-L * 0.42, 0); ctx.lineTo(-L * 0.78, -L * 0.2 + wig * L * 0.15); ctx.lineTo(-L * 0.78, L * 0.2 + wig * L * 0.15); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = P.bg; ctx.beginPath(); ctx.arc(L * 0.28, -L * 0.04, L * 0.05, 0, Math.PI * 2); ctx.fill();
+      ctx.restore(); ctx.globalAlpha = 1;
+    }
+    return {
+      set(dir, on) { hold[dir] = on; if (on) lastUser = T; onChange && onChange(); },
+      releaseAll() { ORDER.forEach(k => { hold[k] = false; }); onChange && onChange(); },
+      held(dir) { return !!hold[dir]; },
+      reconfigure() { foldGoal = foldGoal > 0.5 ? 0 : 1; lastUser = T; onChange && onChange(); },
+      isHunting() { return foldGoal < 0.5; },
+      listen(fn) { onChange = fn; },
+      resize(w, h) {
+        cx = 0; cy = 0; s = 1;
+        const lo = proj(-(B.x + .5), -(B.y + .5), -(B.z + .5)), hi = proj(B.x + .5, B.y + .5, B.z + .5);
+        s = Math.min((w - 40) / (hi[0] - lo[0]), (h - 76) / (lo[1] - hi[1]));
+        const lo2 = proj(-(B.x + .5), -(B.y + .5), -(B.z + .5)), hi2 = proj(B.x + .5, B.y + .5, B.z + .5);
+        cx = w / 2 - (lo2[0] + hi2[0]) / 2; cy = (h + 10) / 2 - (lo2[1] + hi2[1]) / 2;
+      },
+      draw(ctx, w, h, dt, P) {
+        T += dt;
+        const act = active();
+        // physics: the open net swims slower
+        const thrust = 2.6;
+        ORDER.forEach(k => { if (act.indexOf(k) >= 0) for (let i = 0; i < 3; i++) vel[i] += DIR[k][i] * thrust * dt; });
+        const lims = [B.x, B.y, B.z];
+        for (let i = 0; i < 3; i++) {
+          vel[i] *= Math.exp(-(fold < 0.98 ? 5 : 1.7) * dt); pos[i] += vel[i] * dt;
+          if (pos[i] > lims[i]) { pos[i] = lims[i]; vel[i] = -Math.abs(vel[i]) * 0.3; }
+          if (pos[i] < -lims[i]) { pos[i] = -lims[i]; vel[i] = Math.abs(vel[i]) * 0.3; }
+        }
+        const fr = dt / 0.55; fold = foldGoal > fold ? Math.min(foldGoal, fold + fr) : Math.max(foldGoal, fold - fr);
+        emitT += dt;
+        if (act.length && emitT > 0.1) {
+          emitT = 0;
+          act.forEach(k => { const d = DIR[k].map(v => -v); rings.push({ p: pos.map((v, i) => v + d[i] * 0.55), d, age: 0 }); });
+        }
+        rings.forEach(r => { r.age += dt; for (let i = 0; i < 3; i++) r.p[i] += r.d[i] * 1.5 * dt; });
+        rings = rings.filter(r => r.age < 1.3);
+        // fish
+        const playing = !reduce || userActive();
+        if (playing) {
+          spawnT -= dt;
+          if (spawnT <= 0 && fish.length < 4) {
+            fish.push({ x: (Math.random() * 2 - 1) * (B.x - 0.4), y: (Math.random() * 2 - 1) * (B.y - 0.2), z: B.z + 0.9, vz: -(0.32 + Math.random() * 0.18), ph: Math.random() * 6, a: 1, trapped: false, escaping: false });
+            spawnT = 2 + Math.random() * 1.4;
+          }
+        }
+        const netZ = pos[2] - 0.5, trappedNow = [];
+        fish.forEach(f => {
+          if (f.trapped) { f.x = pos[0] + f.ox; f.y = pos[1] + f.oy; f.z = netZ + 0.14 + fold * 0.3; trappedNow.push(f); return; }
+          if (f.escaping) { f.z += 0.9 * dt; f.x += 0.6 * dt; f.a -= dt * 0.6; return; }
+          f.z += f.vz * dt; f.x += Math.sin(T * 1.5 + f.ph) * 0.18 * dt;
+          const dx = f.x - pos[0], dy = f.y - pos[1];
+          if (fold < 0.35 && onNet(dx, dy) && f.z <= netZ + 0.4 && f.z >= netZ - 0.3) {
+            f.trapped = true; f.ox = dx; f.oy = dy; trapT = 0; trappedNow.push(f);
+          }
+          if (f.z < -(B.z + 0.5)) { f.a -= dt * 1.5; if (f.a <= 0 && !f.counted) { f.counted = true; missed++; } }
+        });
+        if (trappedNow.length) {
+          trapT += dt;
+          if (fold > 0.97) {
+            caught += trappedNow.length; pops.push({ n: trappedNow.length, t: 0, p: pos.slice() });
+            trappedNow.forEach(f => { f.gone = true; });
+          } else if (trapT > 3 && fold < 0.5) {
+            trappedNow.forEach(f => { f.trapped = false; f.escaping = true; }); missed += trappedNow.length;
+          }
+        }
+        fish = fish.filter(f => !f.gone && f.a > 0);
+        pops.forEach(p => { p.t += dt; }); pops = pops.filter(p => p.t < 1.2);
+
+        // ----- draw -----
+        ctx.fillStyle = P.bg; ctx.fillRect(0, 0, w, h);
+        const g = ctx.createLinearGradient(0, 0, 0, h);
+        g.addColorStop(0, alpha(P.accent, 0.03)); g.addColorStop(1, alpha(P.accent, 0.11));
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        const fz = -(B.z + .5), bx = B.x + .5, by = B.y + .5, bz = B.z + .5;
+        poly(ctx, [[-bx, -by, fz], [bx, -by, fz], [bx, by, fz], [-bx, by, fz]]); ctx.fillStyle = alpha(P.accent, 0.06); ctx.fill();
+        ctx.strokeStyle = alpha(P.accent, 0.18); ctx.lineWidth = 1; ctx.beginPath();
+        for (let x = -bx; x <= bx + 1e-6; x += 1) { const a = proj(x, -by, fz), b = proj(x, by, fz); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+        for (let y = -by; y <= by + 1e-6; y += 1) { const a = proj(-bx, y, fz), b = proj(bx, y, fz); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+        ctx.stroke();
+        ctx.strokeStyle = P.line; ctx.beginPath();
+        [[-bx, by], [bx, by]].forEach(([x, y]) => { const a = proj(x, y, fz), b = proj(x, y, bz); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); });
+        { const a = proj(-bx, by, bz), b = proj(bx, by, bz); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+        ctx.stroke();
+        const fl = proj(pos[0] + (1 - fold) * 0.5, pos[1], fz);
+        ctx.fillStyle = alpha(P.ink, 0.08); ctx.beginPath(); ctx.ellipse(fl[0], fl[1], (0.75 + (1 - fold) * 1.2) * s, (0.22 + (1 - fold) * 0.3) * s, 0, 0, Math.PI * 2); ctx.fill();
+        const behind = o => o.y > pos[1] + 0.6 || o.z < netZ - 0.2;
+        rings.filter(r => behind({ y: r.p[1], z: r.p[2] })).forEach(r => drawRing(ctx, r, P));
+        fish.filter(f => !f.trapped && behind(f)).forEach(f => drawFish(ctx, f, P));
+        // modules
+        const firing = new Set(act.map(k => OPP[k]));
+        modules().forEach(m => {
+          const shade = 0.35 + 0.6 * m.n[2] + 0.4 * m.n[1] + 0.15 * m.n[0];
+          poly(ctx, m.pts); ctx.fillStyle = grey(clamp(shade, 0, 1)); ctx.fill();
+          ctx.strokeStyle = '#86868b'; ctx.lineWidth = 1; ctx.stroke();
+          const inset = m.pts.map(p => p.map((v, i) => v + (m.c[i] - v) * 0.16));
+          poly(ctx, inset); ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.stroke();
+          const q = proj(m.c[0], m.c[1], m.c[2]), on = firing.has(m.k);
+          const rs = 0.15 * s * (0.55 + 0.45 * Math.max(m.n[1], m.n[2], m.n[0] * 0.8));
+          ctx.fillStyle = '#2c2c2e'; ctx.beginPath(); ctx.ellipse(q[0], q[1], rs, rs * (0.5 + 0.5 * Math.max(m.n[1], m.n[0])), 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = on ? P.accent : '#c8a24a'; ctx.beginPath(); ctx.arc(q[0], q[1], rs * 0.5, 0, Math.PI * 2); ctx.fill();
+          if (on) { ctx.strokeStyle = alpha(P.accent, .6); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], rs * 1.5, 0, Math.PI * 2); ctx.stroke(); }
+        });
+        fish.filter(f => f.trapped && fold < 0.85).forEach(f => drawFish(ctx, f, P));
+        fish.filter(f => !f.trapped && !behind(f)).forEach(f => drawFish(ctx, f, P));
+        rings.filter(r => !behind({ y: r.p[1], z: r.p[2] })).forEach(r => drawRing(ctx, r, P));
+        pops.forEach(p => {
+          const q = proj(p.p[0], p.p[1], p.p[2] + 0.8 + p.t * 0.6);
+          ctx.globalAlpha = clamp(1.2 - p.t, 0, 1); ctx.font = '700 16px ' + SANS; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = OK; ctx.fillText('+' + p.n + ' trapped', q[0], q[1]); ctx.globalAlpha = 1;
+        });
+        // HUD
+        const manual = userActive();
+        if (blocked) hud(ctx, 'Fold first (R). It can only swim as a box.', w / 2, 24, 'center', BAD, 600);
+        hud(ctx, manual ? 'Manual' : (reduce ? 'Hold a key to swim, R to reconfigure' : 'Demo  ·  W A S D Q E to swim, R to reconfigure'), 16, 24, 'left', manual ? P.accent : P.muted, 600);
+        hud(ctx, 'Trapped ' + caught + '   ·   Missed ' + missed, w - 16, 24, 'right', P.ink, 600);
+        ctx.font = '600 11px ' + SANS;
+        const formLab = fold > 0.5 ? 'Submerged form' : 'Hunting form', fw2 = ctx.measureText(formLab).width + 16;
+        rr(ctx, w - 16 - fw2, h - 30, fw2, 18, 9); ctx.fillStyle = fold > 0.5 ? P.grid : P.accent; ctx.fill();
+        ctx.fillStyle = fold > 0.5 ? P.ink : '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(formLab, w - 16 - fw2 / 2, h - 21);
+        let cxp = 16;
+        ORDER.forEach(k => {
+          const lab = NAME[k], tw = ctx.measureText(lab).width + 14, on = firing.has(k);
+          rr(ctx, cxp, h - 30, tw, 18, 9); ctx.fillStyle = on ? P.accent : P.grid; ctx.fill();
+          ctx.fillStyle = on ? '#ffffff' : P.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, cxp + tw / 2, h - 21);
+          cxp += tw + 5;
+        });
+        hud(ctx, 'Firing modules', 16, h - 38, 'left', P.muted);
+      }
+    };
+  })();
+
+  // =====================================================================
+  // VIALS: conveyor under a camera, shifting light, generator labels
+  // =====================================================================
+  const vialSim = (function () {
+    let T = 3.1;
+    return {
+      draw(ctx, w, h, dt, P) {
+        T += dt;
+        const frame = Math.floor(T / 1.4);
+        const lx = (0.15 + hash(frame) * 0.7) * w, ly = (0.1 + hash(frame + 50) * 0.4) * h, lr = w * (0.35 + hash(frame + 99) * 0.3);
+        ctx.fillStyle = P.bg; ctx.fillRect(0, 0, w, h);
+        const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+        g.addColorStop(0, 'rgba(255,255,255,' + (0.06 + hash(frame + 7) * 0.12).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = P.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(lx, ly, 6, 0, Math.PI * 2);
+        for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.moveTo(lx + Math.cos(a) * 9, ly + Math.sin(a) * 9); ctx.lineTo(lx + Math.cos(a) * 13, ly + Math.sin(a) * 13); }
+        ctx.stroke();
+        const beltY = h * 0.78, vw = Math.max(16, Math.min(30, w * 0.045)), vh = vw * 2.5, sp = vw * 2.3, v = w * 0.075;
+        rr(ctx, -10, beltY, w + 20, 10, 5); ctx.fillStyle = '#2c2c2e'; ctx.fill();
+        ctx.strokeStyle = '#48484a'; ctx.lineWidth = 1; ctx.beginPath();
+        const off = (T * v) % 16;
+        for (let x = -16 + off; x < w; x += 16) { ctx.moveTo(x, beltY + 2); ctx.lineTo(x + 5, beltY + 8); }
+        ctx.stroke();
+        const camX = w * 0.55, camY = 34, f0 = w * 0.38, f1 = w * 0.72;
+        ctx.fillStyle = alpha(P.accent, .07); ctx.beginPath(); ctx.moveTo(camX, camY + 10); ctx.lineTo(f0, beltY); ctx.lineTo(f1, beltY); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = alpha(P.accent, .45); ctx.setLineDash([3, 5]); ctx.beginPath();
+        ctx.moveTo(camX, camY + 10); ctx.lineTo(f0, beltY); ctx.moveTo(camX, camY + 10); ctx.lineTo(f1, beltY); ctx.stroke(); ctx.setLineDash([]);
+        const cg = ctx.createLinearGradient(0, camY - 10, 0, camY + 10);
+        cg.addColorStop(0, '#e3e3e8'); cg.addColorStop(1, '#86868b');
+        rr(ctx, camX - 18, camY - 11, 36, 20, 5); ctx.fillStyle = cg; ctx.fill();
+        cap(ctx, camX, camY + 9, 5, P.accent);
+        const N = Math.ceil((w + 2 * sp) / sp) + 1;
+        for (let i = 0; i < N; i++) {
+          const raw = i * sp + T * v, wrap = Math.floor(raw / (N * sp)), x = raw - wrap * N * sp - sp, id = i + wrap * N;
+          const r = hash(id + 13), defect = r < 0.2 ? 'cap missing' : r < 0.36 ? 'low fill' : 'pass';
+          const top = beltY - vh, lvl = defect === 'low fill' ? 0.3 : 0.66;
+          ctx.fillStyle = alpha(P.accent, .5); rr(ctx, x - vw / 2 + 2, beltY - vh * lvl * 0.8, vw - 4, vh * lvl * 0.8 - 2, 3); ctx.fill();
+          ctx.strokeStyle = '#d2d2d7'; ctx.lineWidth = 1.3;
+          ctx.beginPath(); ctx.moveTo(x - vw * 0.28, top + vh * 0.06); ctx.lineTo(x - vw * 0.28, top + vh * 0.18);
+          ctx.lineTo(x - vw / 2, top + vh * 0.24); ctx.lineTo(x - vw / 2, beltY - 3); ctx.quadraticCurveTo(x - vw / 2, beltY, x - vw / 2 + 3, beltY);
+          ctx.lineTo(x + vw / 2 - 3, beltY); ctx.quadraticCurveTo(x + vw / 2, beltY, x + vw / 2, beltY - 3);
+          ctx.lineTo(x + vw / 2, top + vh * 0.24); ctx.lineTo(x + vw * 0.28, top + vh * 0.18); ctx.lineTo(x + vw * 0.28, top + vh * 0.06); ctx.stroke();
+          if (defect !== 'cap missing') { rr(ctx, x - vw * 0.36, top - 2, vw * 0.72, vh * 0.1, 2); ctx.fillStyle = '#8e8e93'; ctx.fill(); }
+          if (x > f0 + vw * 0.3 && x < f1 - vw * 0.3) {
+            const col = defect === 'pass' ? OK : BAD;
+            rr(ctx, x - vw / 2 - 5, top - 7, vw + 10, vh + 10, 4); ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.font = '600 11px ' + SANS; const tw = ctx.measureText(defect).width;
+            rr(ctx, x - vw / 2 - 5, top - 26, tw + 14, 17, 8.5); ctx.fillStyle = col; ctx.fill();
+            ctx.fillStyle = '#000'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(defect, x - vw / 2 + 2, top - 17.5);
+          }
+        }
+        hud(ctx, 'Frame ' + (1024 + frame) + '  ·  light seed ' + Math.floor(hash(frame + 3) * 9000 + 1000), 16, h - 12, 'left', P.muted);
+        hud(ctx, 'Labels from the generator', w - 16, h - 12, 'right', P.accent);
+      }
+    };
+  })();
+
+  // =====================================================================
+  // TRUNK: soft pneumatic actuator with two finger-like tips lifting an egg
+  // =====================================================================
+  const trunkSim = (function () {
+    let T = 0.2;
+    const CYCLE = 7.5, TH0 = -0.25, THR = 1.05, THL = 1.9, N = 64;
+    function phase(t) {
+      const p = (t % CYCLE) / CYCLE;
+      let th, f, carry = false, label;
+      if (p < 0.28) { th = lerp(TH0, THR, ease(p / 0.28)); f = 0; label = 'Inflating chamber A'; }
+      else if (p < 0.38) { th = THR; f = ease((p - 0.28) / 0.1); label = 'Fingers closing'; }
+      else if (p < 0.6) { th = lerp(THR, THL, ease((p - 0.38) / 0.22)); f = 1; carry = true; label = 'Lifting'; }
+      else if (p < 0.7) { th = THL; f = 1; carry = true; label = 'Holding'; }
+      else if (p < 0.84) { th = lerp(THL, THR, ease((p - 0.7) / 0.14)); f = 1; carry = true; label = 'Setting down'; }
+      else if (p < 0.92) { th = THR; f = 1 - ease((p - 0.84) / 0.08); label = 'Releasing'; }
+      else { th = lerp(THR, TH0, ease((p - 0.92) / 0.08)); f = 0; label = 'Venting'; }
+      return { th, f, carry, label };
+    }
+    // constant-curvature centerline
+    function arc(bx, by, L, th) {
+      const out = [];
+      for (let i = 0; i <= N; i++) {
+        const s = i / N, a = Math.PI / 2 + th * s;
+        let x, y;
+        if (Math.abs(th) < 1e-4) { x = bx; y = by + L * s; }
+        else { const r = L / th; x = bx - r * (1 - Math.cos(th * s)); y = by + r * Math.sin(th * s); }
+        out.push({ x, y, a, s });
+      }
+      return out;
+    }
+    function finger(ctx, x, y, a, side, f, len, wd, P) {
+      const pts = [[x, y]]; let h = a + side * 0.5 * (1 - f), px = x, py = y;
+      const curl = f * 2.3, M = 14;
+      for (let i = 1; i <= M; i++) { h -= side * curl / M; px += Math.cos(h) * len / M; py += Math.sin(h) * len / M; pts.push([px, py]); }
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = 0; i < M; i++) {
+          const ww = lerp(wd, wd * 0.5, i / M) + (pass ? 0 : 2);
+          ctx.strokeStyle = pass ? 'rgba(236,236,241,0.96)' : '#a1a1a6'; ctx.lineWidth = ww;
+          ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke();
+        }
+      }
+      ctx.strokeStyle = alpha(P.accent, 0.15 + 0.6 * f); ctx.lineWidth = Math.max(1.5, wd * 0.22);
+      ctx.beginPath(); pts.slice(0, M - 1).forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+    }
+    function egg(ctx, x, y, r, tilt) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+      const g = ctx.createRadialGradient(-r * 0.3, -r * 0.4, r * 0.1, 0, 0, r * 1.3);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#d2d2d7');
+      ctx.fillStyle = g; ctx.strokeStyle = '#a1a1a6'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(0, r * 0.06, r * 0.82, r, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+    return {
+      draw(ctx, w, h, dt, P) {
+        T += dt;
+        const ph = phase(T);
+        const bx = w * 0.56, by = h * 0.1, L = h * 0.6, W0 = h * 0.13, W1 = h * 0.075;
+        const pA = clamp(Math.max(0, ph.th) / THL, 0, 1), pB = clamp(Math.max(0, -ph.th) / 0.5, 0, 1);
+        const C = arc(bx, by, L, ph.th);
+        const tip = C[N], R = h * 0.055;
+        const restC = arc(bx, by, L, THR), rt = restC[N];
+        const eggRest = [rt.x + Math.cos(rt.a) * R * 1.55, rt.y + Math.sin(rt.a) * R * 1.55];
+        const eggPos = ph.carry ? [tip.x + Math.cos(tip.a) * R * 1.55, tip.y + Math.sin(tip.a) * R * 1.55] : eggRest;
+        ctx.fillStyle = P.bg; ctx.fillRect(0, 0, w, h);
+        // stand
+        const standTop = eggRest[1] + R * 0.95;
+        rr(ctx, eggRest[0] - R * 0.9, standTop, R * 1.8, h - standTop + 6, 6); ctx.fillStyle = P.line; ctx.fill();
+        // air lines and mount
+        ctx.lineCap = 'round';
+        [[-W0 * 0.22, pA], [W0 * 0.22, pB]].forEach(([dx, pr]) => {
+          ctx.strokeStyle = alpha(P.accent, 0.25 + 0.6 * pr); ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(bx + dx * 3, 0); ctx.bezierCurveTo(bx + dx * 3, by * 0.4, bx + dx, by * 0.5, bx + dx, by); ctx.stroke();
+        });
+        const mg = ctx.createLinearGradient(0, by - h * 0.05, 0, by + 6);
+        mg.addColorStop(0, '#e3e3e8'); mg.addColorStop(1, '#8e8e93');
+        rr(ctx, bx - W0 * 0.95, by - h * 0.045, W0 * 1.9, h * 0.05, 5); ctx.fillStyle = mg; ctx.fill();
+        // body outline with corrugations; the inflated chamber's ridges swell
+        const side = (p, sgn, pr) => {
+          const ww = lerp(W0, W1, p.s) / 2;
+          const ridge = W0 * (0.04 + 0.16 * pr) * Math.abs(Math.sin(Math.PI * p.s * 10));
+          const n = p.a + sgn * Math.PI / 2, o = ww + ridge;
+          return [p.x + Math.cos(n) * o, p.y + Math.sin(n) * o];
+        };
+        ctx.beginPath();
+        C.forEach((p, i) => { const q = side(p, -1, pA); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+        for (let i = N; i >= 0; i--) { const q = side(C[i], 1, pB); ctx.lineTo(q[0], q[1]); }
+        ctx.closePath();
+        const bg = ctx.createLinearGradient(bx - W0, 0, bx + W0, 0);
+        bg.addColorStop(0, 'rgba(244,244,247,0.97)'); bg.addColorStop(1, 'rgba(214,214,220,0.97)');
+        ctx.fillStyle = bg; ctx.fill(); ctx.strokeStyle = '#a1a1a6'; ctx.lineWidth = 1; ctx.stroke();
+        // ridge seams
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        for (let k = 1; k < 10; k++) {
+          const p = C[Math.round(k / 10 * N)], ww = lerp(W0, W1, p.s) / 2, n = p.a + Math.PI / 2;
+          ctx.beginPath(); ctx.moveTo(p.x + Math.cos(n) * ww, p.y + Math.sin(n) * ww); ctx.lineTo(p.x - Math.cos(n) * ww, p.y - Math.sin(n) * ww); ctx.stroke();
+        }
+        // internal chambers
+        [[-1, pA], [1, pB]].forEach(([sgn, pr]) => {
+          ctx.strokeStyle = alpha(P.accent, 0.12 + 0.7 * pr); ctx.lineWidth = Math.max(2, W0 * (0.1 + 0.08 * pr)); ctx.lineCap = 'round';
+          ctx.beginPath();
+          C.forEach((p, i) => {
+            if (i > N - 3) return;
+            const o = lerp(W0, W1, p.s) * 0.2, n = p.a + sgn * Math.PI / 2;
+            const x = p.x + Math.cos(n) * o, y = p.y + Math.sin(n) * o;
+            i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          });
+          ctx.stroke();
+        });
+        // egg, then the two soft fingers around it
+        egg(ctx, eggPos[0], eggPos[1], R, ph.carry ? tip.a - Math.PI / 2 : restC[N].a - Math.PI / 2);
+        const nx = Math.cos(tip.a + Math.PI / 2), ny = Math.sin(tip.a + Math.PI / 2), off = W1 * 0.32;
+        finger(ctx, tip.x + nx * off, tip.y + ny * off, tip.a, 1, ph.f, R * 2.3, W1 * 0.55, P);
+        finger(ctx, tip.x - nx * off, tip.y - ny * off, tip.a, -1, ph.f, R * 2.3, W1 * 0.55, P);
+        // pressure gauges
+        const gx = w - 110, gy = 36, gh = h - 100;
+        hud(ctx, 'Chamber pressure', w - 16, gy - 12, 'right', P.muted);
+        [['A', pA], ['B', pB], ['Tips', ph.f]].forEach(([lab, v], i) => {
+          const x = gx + i * 34;
+          rr(ctx, x, gy, 10, gh, 5); ctx.fillStyle = P.line; ctx.fill();
+          if (v > 0.01) { rr(ctx, x, gy + gh * (1 - v), 10, gh * v, 5); ctx.fillStyle = P.accent; ctx.fill(); }
+          hud(ctx, lab, x + 5, gy + gh + 16, 'center', P.muted);
+        });
+        hud(ctx, ph.label, 16, h - 14, 'left', P.ink, 600);
+      }
+    };
+  })();
+
+  // ---------- mount ----------
+  const nameCanvas = document.getElementById('armCanvas');
+  const nameStage = makeStage(nameCanvas, nameSim, true);
+  makeStage(document.getElementById('amrCanvas'), amrSim);
+  const piezoStage = makeStage(document.getElementById('piezoCanvas'), piezoSim, true);
+  makeStage(document.getElementById('vialCanvas'), vialSim);
+  makeStage(document.getElementById('trunkCanvas'), trunkSim);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { nameSim.rebuild(); nameStage.render(0); });
+
+  // pointer dissolves the resolved name back into points
+  function local(ev) { const r = nameCanvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
+  nameCanvas.addEventListener('pointermove', ev => { const [x, y] = local(ev); nameSim.pointer(x, y); });
+  nameCanvas.addEventListener('pointerdown', ev => { const [x, y] = local(ev); nameSim.pointer(x, y); });
+  nameCanvas.addEventListener('pointerleave', () => nameSim.leave());
+  nameCanvas.addEventListener('pointercancel', () => nameSim.leave());
+
+  const replay = document.getElementById('replay');
+  replay.addEventListener('click', function () { nameSim.replay(); nameStage.render(0); });
+  if (reduce) replay.hidden = true;
+
+  // piezo controls: keyboard + on-screen pad
+  const pad = document.getElementById('jetPad'), fig = document.getElementById('piezoFig');
+  const btns = Array.prototype.slice.call(pad.querySelectorAll('[data-dir]'));
+  const foldBtn = document.getElementById('foldBtn');
+  function syncPad() {
+    btns.forEach(b => b.classList.toggle('on', piezoSim.held(b.dataset.dir)));
+    const hunting = piezoSim.isHunting();
+    foldBtn.firstChild.nodeValue = hunting ? 'Fold' : 'Open';
+    foldBtn.setAttribute('aria-pressed', hunting ? 'true' : 'false');
+    foldBtn.setAttribute('aria-label', hunting ? 'Fold into submerged form (R)' : 'Open into hunting form (R)');
+  }
+  piezoSim.listen(syncPad);
+  foldBtn.addEventListener('click', () => piezoSim.reconfigure());
+  btns.forEach(b => {
+    const d = b.dataset.dir;
+    b.addEventListener('pointerdown', ev => { ev.preventDefault(); try { b.setPointerCapture(ev.pointerId); } catch (e) {} piezoSim.set(d, true); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => b.addEventListener(n, () => piezoSim.set(d, false)));
+    b.addEventListener('keydown', ev => { if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); piezoSim.set(d, true); } });
+    b.addEventListener('keyup', ev => { if (ev.key === ' ' || ev.key === 'Enter') piezoSim.set(d, false); });
+  });
+  const KEYS = { a: 'nx', d: 'px', w: 'py', s: 'ny', q: 'pz', e: 'nz' };
+  const ARROWS = { ArrowLeft: 'nx', ArrowRight: 'px', ArrowUp: 'py', ArrowDown: 'ny' };
+  const section = document.getElementById('piezo');
+  window.addEventListener('keydown', ev => {
+    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    let d = KEYS[ev.key.toLowerCase()];
+    if (!d && ARROWS[ev.key] && section.contains(document.activeElement)) { d = ARROWS[ev.key]; ev.preventDefault(); }
+    if (d) piezoSim.set(d, true);
+    if (ev.key.toLowerCase() === 'r' && !ev.repeat) piezoSim.reconfigure();
+  });
+  window.addEventListener('keyup', ev => {
+    const d = KEYS[(ev.key || '').toLowerCase()] || ARROWS[ev.key];
+    if (d) piezoSim.set(d, false);
+  });
+  window.addEventListener('blur', () => piezoSim.releaseAll());
+  fig.addEventListener('pointerdown', () => { try { fig.focus({ preventScroll: true }); } catch (e) {} });
+
+  // ---------- scroll reveal ----------
+  if (!reduce && 'IntersectionObserver' in window) {
+    const groups = [];
+    const add = (els, kind, step) => { Array.prototype.forEach.call(els, (el, i) => { el.setAttribute('data-reveal', kind || 'up'); el.style.setProperty('--d', (i * (step || 0)) + 'ms'); groups.push(el); }); };
+    document.querySelectorAll('.tile-head').forEach(h => add(h.children, 'up', 90));
+    add(document.querySelectorAll('.render'), 'scale');
+    add(document.querySelectorAll('.render-cap, .jetpad'));
+    document.querySelectorAll('.specs').forEach(g => add(g.children, 'up', 110));
+    document.querySelectorAll('.prose').forEach(g => add(g.children, 'up', 90));
+    add(document.querySelectorAll('.card'), 'up', 90);
+    add(document.querySelectorAll('.contact-list .crow, #contact .ctas'), 'up', 80);
+    add(document.querySelectorAll('footer .inner > *'), 'up', 80);
+    document.documentElement.classList.add('js-reveal');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+    groups.forEach(el => io.observe(el));
+  }
+
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
