@@ -172,8 +172,25 @@ main {
   padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px));
   pointer-events: none;
 }
-.bar-top a, .bar-top span { pointer-events: auto; font-size: 13px; color: #e8e8ed; font-weight: 600; }
-.bar-top span { font-weight: 400; color: var(--muted-2); }
+.bar-top a { pointer-events: auto; font-size: 13px; color: #e8e8ed; font-weight: 600; }
+.bar-r { display: flex; align-items: center; gap: 16px; }
+.bar-top .role { font-size: 13px; color: var(--muted-2); }
+.tour {
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px 0 5px;
+  border-radius: var(--pill); border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(44, 44, 48, 0.62);
+  -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%);
+  color: #f5f5f7; font: 600 13px/1 var(--f-sans); letter-spacing: -0.01em; cursor: pointer;
+  transition: background-color .2s ease-out, transform .16s ease-out;
+}
+.tour:hover { background: rgba(66, 66, 72, 0.78); }
+.tour:active { transform: scale(.97); }
+.tour svg { width: 20px; height: 20px; flex: none; display: block; }
+.tour .trk { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 1.6; }
+.tour .arc { fill: none; stroke: var(--link); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
+.tour .i-pause, .tour .i-play { fill: #f5f5f7; }
+.tour .i-pause { display: none; }
+.tour.playing .i-pause { display: inline; }
+.tour.playing .i-play { display: none; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: #000; }
 
 /* loader */
@@ -236,18 +253,19 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .facts li span::before { content: " · "; }
   .learn { gap: 8px; }
   .learn span { font-size: 14px; }
+  .bar-top .role { display: none; }
 }
 /* below desktop width the callouts move into the cards */
 @media (max-width: 999px) { .facts { display: grid; } #overlay { display: none; } }
 /* no WebGL: plain readable page */
-.no3d #stage, .no3d #overlay, .no3d .dots, .no3d .hint, .no3d .tele { display: none; }
+.no3d #stage, .no3d #overlay, .no3d .dots, .no3d .hint, .no3d .tele, .no3d .tour { display: none; }
 .no3d body { background: radial-gradient(1200px 800px at 70% 0%, #1d1d1f, #000 70%) fixed; }
 .no3d .ch { height: auto; padding-block: 10vh; }
 .no3d .intro { padding-block: 22vh 8vh; }
 .no3d .card { position: relative; top: auto; bottom: auto; transform: none; width: min(560px, 100%); margin-inline: auto; }
 .no3d .hero-title { position: relative; top: auto; }
 .no3d .facts { display: grid; }
-@media (prefers-reduced-motion: reduce) { .ring, .hint i::after, #loader i::after { animation: none; } .pill { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ring, .hint i::after, #loader i::after { animation: none; } .pill, .tour { transition: none; } }
 </style>
 </head>
 <body>
@@ -255,7 +273,21 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <div id="overlay" aria-hidden="true"><svg id="leads"></svg></div>
 <div id="loader"><div>Building the lab<i></i></div></div>
 
-<div class="bar-top"><a href="#top" data-jump="0">Muhammad Aadil</a><span>Robotics engineer</span></div>
+<div class="bar-top">
+  <a href="#top" data-jump="0">Muhammad Aadil</a>
+  <div class="bar-r">
+    <span class="role">Robotics engineer</span>
+    <button class="tour playing" id="tourBtn" type="button">
+      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+        <circle class="trk" cx="10" cy="10" r="8.6"/>
+        <circle class="arc" cx="10" cy="10" r="8.6" pathLength="100" transform="rotate(-90 10 10)"/>
+        <g class="i-pause"><rect x="7" y="6.3" width="2.1" height="7.4" rx="0.7"/><rect x="10.9" y="6.3" width="2.1" height="7.4" rx="0.7"/></g>
+        <path class="i-play" d="M8.1 6.4v7.2l5.7-3.6z"/>
+      </svg>
+      <span class="tl">Pause tour</span>
+    </button>
+  </div>
+</div>
 <nav class="dots" aria-label="Chapters"></nav>
 
 <main>
@@ -265,7 +297,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <span class="eyebrow">Robotics engineer</span>
       <h1>Muhammad Aadil</h1>
       <p>From CAD to code, I build robots that work on their own. Third-year mechanical engineering student at IIT Bhubaneswar.</p>
-      <div class="hint"><i></i>Scroll to start the rover</div>
+      <div class="hint"><i></i>Scroll to drive the rover, or wait for the tour</div>
     </div>
   </section>
 
@@ -430,16 +462,26 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   const chapters = $$('.ch');
   const cards = chapters.map(c => c.querySelector('.card'));
   const heroTitle = $('.hero-title');
-  let tops = [], heights = [];
+  let tops = [], heights = [], T0 = 0, Tmax = 1;
+  function maxScroll() {
+    const m = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    return lenis ? Math.min(m, lenis.limit) : m;
+  }
+  function tauAt(y) {
+    const center = y + window.innerHeight * 0.5;
+    for (let i = chapters.length - 1; i >= 0; i--) if (center >= tops[i]) return i + clamp((center - tops[i]) / heights[i], 0, 1);
+    return 0;
+  }
   function measure() {
     const y = window.scrollY;
     tops = chapters.map(c => c.getBoundingClientRect().top + y);
     heights = chapters.map(c => c.offsetHeight);
+    T0 = tauAt(0); Tmax = tauAt(maxScroll());
   }
-  function tau() {
-    const center = window.scrollY + window.innerHeight * 0.5;
-    for (let i = chapters.length - 1; i >= 0; i--) if (center >= tops[i]) return i + clamp((center - tops[i]) / heights[i], 0, 1);
-    return 0;
+  function tau() { return tauAt(window.scrollY); }
+  function scrollForTau(t) {
+    const i = clamp(Math.floor(t), 0, chapters.length - 1);
+    return clamp(tops[i] + (t - i) * heights[i] - window.innerHeight * 0.5, 0, maxScroll());
   }
   function jump(i) {
     const y = i === 0 ? 0 : tops[i] + heights[i] * 0.5 - window.innerHeight * 0.5;
@@ -476,6 +518,61 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   $$('[data-live]').forEach(el => { live[el.dataset.live] = el; });
   const wheelBars = $$('[data-wheel]'), pressBars = $$('[data-press]');
 
+  // ---------------------------------------------------------------- auto tour
+  // Nobody scrolling? The page tours itself: slow while a card is up, quicker through camera moves.
+  // A wheel, touch, key or click hands control back, and the tour picks up again after a quiet spell.
+  const tourBtn = $('#tourBtn'), tourLabel = tourBtn && tourBtn.querySelector('.tl'), tourArc = tourBtn && tourBtn.querySelector('.arc');
+  const TOUR = { paused: false, playing: false, done: false, auto: 0, ramp: 0, startAt: Infinity, lastInput: -Infinity, expectY: -1, ignoreUntil: 0, prog: -1 };
+  const START_DELAY = 4000, RESUME_DELAY = 8000, TOUR_BASE = 1 / 11.5, TOUR_AMP = 0.5;
+  function syncTour() {
+    if (!tourBtn) return;
+    const on = !TOUR.paused;
+    tourBtn.classList.toggle('playing', on);
+    tourLabel.textContent = on ? 'Pause tour' : 'Play tour';
+  }
+  function startTour() {
+    measure();
+    TOUR.paused = false; TOUR.playing = true; TOUR.ramp = 0;
+    TOUR.auto = tau(); TOUR.done = TOUR.auto >= Tmax - 1e-3; TOUR.expectY = window.scrollY;
+    syncTour();
+  }
+  function handOver(e) {
+    if (e && e.target && e.target.closest && e.target.closest('#tourBtn')) return;
+    TOUR.lastInput = performance.now();
+    TOUR.playing = false;
+  }
+  function tourStep(now, dt) {
+    if (reduce || TOUR.paused) return;
+    if (!TOUR.playing) {
+      if (now < TOUR.startAt || now - TOUR.lastInput < RESUME_DELAY) return;
+      startTour();
+    }
+    if (TOUR.done) return;
+    TOUR.ramp = Math.min(1, TOUR.ramp + dt / 1.6);
+    const p = TOUR.auto - Math.floor(TOUR.auto);
+    const speed = TOUR_BASE * (1 + TOUR_AMP * Math.cos(2 * Math.PI * p)) * ss(0, 1, TOUR.ramp) * clamp((Tmax - TOUR.auto) / 0.22, 0.12, 1);
+    TOUR.auto = Math.min(Tmax, TOUR.auto + speed * dt);
+    if (TOUR.auto >= Tmax - 1e-3) { TOUR.auto = Tmax; TOUR.done = true; }
+    const y = scrollForTau(TOUR.auto);
+    TOUR.expectY = y;
+    if (lenis) lenis.scrollTo(y, { immediate: true, force: true }); else window.scrollTo(0, y);
+  }
+  if (tourBtn) {
+    if (reduce) tourBtn.hidden = true;
+    tourBtn.addEventListener('click', () => {
+      if (TOUR.paused) startTour();
+      else { TOUR.paused = true; TOUR.playing = false; }
+      syncTour();
+    });
+  }
+  ['wheel', 'touchstart', 'touchmove', 'pointerdown'].forEach(t => window.addEventListener(t, handOver, { passive: true }));
+  window.addEventListener('keydown', e => { if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return; handOver(e); });
+  // anything else that moves the page (scrollbar drag, find in page) also hands control back
+  window.addEventListener('scroll', () => {
+    if (!TOUR.playing || TOUR.done || performance.now() < TOUR.ignoreUntil) return;
+    if (Math.abs(window.scrollY - TOUR.expectY) > 6) handOver();
+  }, { passive: true });
+
   // ---------------------------------------------------------------- 3D
   let lab = null;
   try { lab = buildLab(); } catch (e) { console.warn('3D view unavailable:', e && e.message); lab = null; }
@@ -487,7 +584,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
 
   let resizeT = 0;
-  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { measure(); lab.resize(); }, 120); });
+  window.addEventListener('resize', () => { TOUR.ignoreUntil = performance.now() + 900; clearTimeout(resizeT); resizeT = setTimeout(() => { measure(); lab.resize(); }, 120); });
   window.addEventListener('load', measure);
 
   let last = performance.now(), clock = 0, first = true;
@@ -495,10 +592,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
     if (lenis) lenis.raf(now);
     if (!reduce) clock += dt;
-    const T = tau();
-    lab.update(T, dt, clock, now);
+    tourStep(now, dt);
+    const T = TOUR.playing && !TOUR.done ? TOUR.auto : tau();
+    lab.update(T, dt, clock, now, !reduce && !TOUR.paused);
     uiUpdate(T);
-    if (first) { first = false; setTimeout(() => $('#loader').classList.add('gone'), 250); }
+    if (first) { first = false; measure(); TOUR.startAt = now + 250 + START_DELAY; setTimeout(() => $('#loader').classList.add('gone'), 250); }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -515,6 +613,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       c.style.opacity = v.toFixed(3);
       c.style.visibility = v < 0.01 ? 'hidden' : 'visible';
     });
+    if (tourArc) {
+      const pr = clamp((T - T0) / Math.max(0.001, Tmax - T0), 0, 1);
+      if (Math.abs(pr - TOUR.prog) > 0.002) { TOUR.prog = pr; tourArc.style.strokeDashoffset = (100 - pr * 100).toFixed(2); }
+    }
   }
 
   // =====================================================================================
@@ -640,9 +742,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     const wallL = mesh(new THREE.PlaneGeometry(12, 4.2), M.wall, -8, 2.1, 0, scene, false); wallL.rotation.y = Math.PI / 2;
     const wallR = mesh(new THREE.PlaneGeometry(12, 4.2), M.wall, 8, 2.1, 0, scene, false); wallR.rotation.y = -Math.PI / 2;
     // wall trims
-    [[0, -5.99, 16, 0], [-7.99, 0, 12, Math.PI / 2], [7.99, 0, 12, -Math.PI / 2]].forEach(([x, z, w, ry]) => {
+    // parts that sit on a wall; hidden when the camera is outside that wall so the end orbit reads as a cut-away
+    const wallBits = { back: [], left: [], right: [] };
+    [[0, -5.99, 16, 0, 'back'], [-7.99, 0, 12, Math.PI / 2, 'left'], [7.99, 0, 12, -Math.PI / 2, 'right']].forEach(([x, z, w, ry, side]) => {
       const b = mesh(new THREE.BoxGeometry(w, 0.12, 0.02), M.anod, x, 0.06, z, scene, false); b.rotation.y = ry;
       const t = mesh(new THREE.BoxGeometry(w, 0.025, 0.03), M.aluDark, x, 4.19, z, scene, false); t.rotation.y = ry;
+      wallBits[side].push(t);
     });
     const ceil = mesh(new THREE.PlaneGeometry(16, 12), std('#0e0e10', 0, 0.95), 0, 4.2, 0, scene, false); ceil.rotation.x = Math.PI / 2;
     // night window on the back wall, above the racks
@@ -653,8 +758,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       for (let i = 0; i < 26; i++) { const x = r() * W, w = 10 + r() * 40, h = 30 + r() * 120; g.fillStyle = 'rgba(8,12,20,0.9)'; g.fillRect(x, H - h, w, h); for (let k = 0; k < 6; k++) if (r() < 0.35) { g.fillStyle = 'rgba(255,214,150,' + (0.25 + r() * 0.4).toFixed(2) + ')'; g.fillRect(x + 3 + r() * (w - 6), H - h + 6 + r() * (h - 12), 2, 3); } }
     });
     const win = mesh(new THREE.PlaneGeometry(4.4, 1.6), new THREE.MeshBasicMaterial({ map: winTex, toneMapped: false }), -4.5, 3.1, -5.985, scene, false);
-    for (let k = 0; k <= 4; k++) mesh(new THREE.BoxGeometry(0.04, 1.64, 0.04), M.aluDark, -6.7 + k * 1.1, 3.1, -5.97, scene, false);
-    [2.28, 3.92].forEach(y => mesh(new THREE.BoxGeometry(4.48, 0.04, 0.04), M.aluDark, -4.5, y, -5.97, scene, false));
+    for (let k = 0; k <= 4; k++) wallBits.back.push(mesh(new THREE.BoxGeometry(0.04, 1.64, 0.04), M.aluDark, -6.7 + k * 1.1, 3.1, -5.97, scene, false));
+    [2.28, 3.92].forEach(y => wallBits.back.push(mesh(new THREE.BoxGeometry(4.48, 0.04, 0.04), M.aluDark, -4.5, y, -5.97, scene, false)));
     // floor lane lines along the rack aisles
     const laneMat = new THREE.MeshStandardMaterial({ color: C('#8e8e93'), roughness: 0.7, metalness: 0 });
     [-1.0, -2.0, -3.0, -4.0].forEach(z => { const l = mesh(new THREE.PlaneGeometry(5.6, 0.05), laneMat, -4.3, 0.002, z, scene, false); l.rotation.x = -Math.PI / 2; });
@@ -1234,9 +1339,17 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       { t: 6.86, c: () => [4.9, 1.55, 4.7, 4.85, 1.36, TR.z, 30] },
       { t: 7.16, lift: 0.8, c: () => [0.05, 1.8, -1.9, 0.8, 1.62, -5.95, 40] },
       { t: 7.84, c: () => [0.45, 1.72, -2.6, 0.8, 1.62, -5.95, 40] },
-      { t: 8.25, lift: 1.5, c: () => [-1.2, 8.2, 10.6, 0.3, 0.0, -1.2, 40] },
-      { t: 8.75, c: () => [1.4, 8.6, 10.9, 0.3, 0.0, -1.2, 40] }
+      { t: 8.25, lift: 1.5, c: orbitCam },
+      { t: 8.75, c: orbitCam }
     ];
+    // final overview: scroll pans it a little, time keeps it circling the whole room
+    let curT = 0, orb = 0, orbV = 0;
+    const ORB_W = 2 * Math.PI / 50, ORB_C = [0.3, 0, -1.2];
+    function orbitCam() {
+      const s = Math.max(0, curT - 8.25), u = clamp(s / 0.5, 0, 1);
+      const R = lerp(11.9, 12.15, u), y = lerp(8.2, 8.6, u), th = -0.1257 + s * 0.434 + orb;
+      return [ORB_C[0] + R * Math.sin(th), y, ORB_C[2] + R * Math.cos(th), ORB_C[0], ORB_C[1], ORB_C[2], 40];
+    }
     function cameraAt(T) {
       let i = 0; while (i < KF.length - 2 && T > KF[i + 1].t) i++;
       const A = KF[i], B = KF[i + 1], f = clamp((T - A.t) / (B.t - A.t), 0, 1), e = ease(f);
@@ -1327,7 +1440,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     const FIRE = ['px', 'pz', 'nx', 'nz2'];
     const bubDummy = new THREE.Object3D();
     const tmpN = v3(), tmpP = v3();
-    function update(T, dt, clock, now) {
+    function update(T, dt, clock, now, motion) {
+      // orbit at the end of the story; scrolling back eases it home to its starting angle
+      curT = T;
+      const atEnd = T >= 8.2;
+      orbV = lerp(orbV, atEnd && motion ? ORB_W : 0, 1 - Math.exp(-dt * 0.9));
+      orb += orbV * dt;
+      if (!atEnd) orb = lerp(orb, Math.round(orb / (2 * Math.PI)) * 2 * Math.PI, 1 - Math.exp(-dt * 2.2));
+      else if (orb > 2 * Math.PI) orb -= 2 * Math.PI;
       // rover
       const d = distAt(T), [x, z] = posAt(d);
       rover.position.set(x, 0, z);
@@ -1411,6 +1531,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       // camera
       const c = cameraAt(T);
       camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]);
+      const cp = camera.position;
+      wallBits.back.forEach(m => { m.visible = cp.z > -5.95; });
+      wallBits.left.forEach(m => { m.visible = cp.x > -7.95; });
+      wallBits.right.forEach(m => { m.visible = cp.x < 7.95; });
       const W = window.innerWidth, H = window.innerHeight, asp = W / H;
       let fov = c[6];
       if (asp < 1.25) { const tt = Math.tan(fov * Math.PI / 360) * Math.min(1.25 / asp, 2.2); fov = Math.min(72, 2 * Math.atan(tt) * 180 / Math.PI); }
