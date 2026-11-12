@@ -259,7 +259,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* below desktop width the callouts move into the cards */
 @media (max-width: 999px) { .facts { display: grid; } #overlay { display: none; } }
 /* no WebGL: plain readable page */
-.no3d #stage, .no3d #overlay, .no3d .dots, .no3d .hint, .no3d .tele, .no3d .tour { display: none; }
+.no3d #stage, .no3d #overlay, .no3d .dots, .no3d .hint, .no3d .tele, .no3d .tour, .no3d #startTourBtn { display: none; }
 .no3d body { background: radial-gradient(1200px 800px at 70% 0%, #1d1d1f, #000 70%) fixed; }
 .no3d .ch { height: auto; padding-block: 10vh; }
 .no3d .intro { padding-block: 22vh 8vh; }
@@ -298,7 +298,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <span class="eyebrow">Robotics engineer</span>
       <h1>Muhammad Aadil</h1>
       <p>From CAD to code, I build robots that work on their own. Third-year mechanical engineering student at IIT Bhubaneswar.</p>
-      <div class="hint"><i></i>Scroll to drive the rover, or wait for the tour</div>
+      <button class="pill" id="startTourBtn" type="button">Start the tour</button>
+      <div class="hint"><i></i>Or scroll to drive the rover yourself</div>
     </div>
   </section>
 
@@ -538,7 +539,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     syncTour();
   }
   function handOver(e) {
-    if (e && e.target && e.target.closest && e.target.closest('#tourBtn')) return;
+    if (e && e.target && e.target.closest && e.target.closest('#tourBtn, #startTourBtn')) return;
     TOUR.lastInput = performance.now();
     TOUR.playing = false;
   }
@@ -565,6 +566,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       else { TOUR.paused = true; TOUR.playing = false; }
       syncTour();
     });
+  }
+  // "Start the tour" in the intro: begin right away instead of waiting out the idle delay
+  const startTourBtn = $('#startTourBtn');
+  if (startTourBtn) {
+    if (reduce) startTourBtn.hidden = true;
+    startTourBtn.addEventListener('click', () => { TOUR.lastInput = -Infinity; startTour(); startTourBtn.blur(); });
   }
   ['wheel', 'touchstart', 'touchmove', 'pointerdown'].forEach(t => window.addEventListener(t, handOver, { passive: true }));
   window.addEventListener('keydown', e => { if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return; handOver(e); });
